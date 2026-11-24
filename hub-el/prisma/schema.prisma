@@ -1,0 +1,639 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+// Khai báo công cụ sinh mã Prisma Client để dùng trong Next.js
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Cấu hình kết nối đến cơ sở dữ liệu SQL Server
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// 1. NGƯỜI DÙNG & XÁC THỰC (Tích hợp UI & Auth.js)
+// ==========================================
+
+model User {
+  // --- A. Thông tin định danh cơ bản ---
+  id               String    @id @default(cuid())          // Khóa chính: ID số tự động tăng
+  name             String?                                 // BẮT BUỘC: Google sẽ lưu họ tên vào đây
+  email            String    @unique                       // Email đăng nhập (Bắt buộc, không được trùng)
+  image            String?   @db.NVarChar(Max)             // BẮT BUỘC: Lưu link ảnh đại diện từ Google
+  username         String?   @unique                       // Tên hiển thị (Nickname), có thể null nếu dùng Google
+  password         String?                                 // Mật khẩu đã mã hóa (Chỉ dùng nếu tạo acc thường)
+  avatar           String?                                 // Link ảnh đại diện hoặc chữ cái đầu tên
+  fullName         String?                                 // Họ và tên thật của người dùng
+  emailVerified    DateTime?                               // Mốc thời gian xác thực email (Chuẩn của Auth.js)
+  role             String    @default("student")           // Quyền hạn: 'student', 'teacher', hoặc 'admin'
+  isActive         Boolean   @default(true)                // Trạng thái tài khoản: true (bình thường), false (bị khóa)
+  createdAt        DateTime  @default(now())               // Mốc thời gian hệ thống tạo tài khoản
+  updatedAt        DateTime  @updatedAt                    // Tự động cập nhật lại thời gian khi user đổi thông tin
+  interests        String?   @db.NVarChar(Max)             // Lưu danh sách sở thích dưới dạng JSON string
+  searchHistory    String?   @db.NVarChar(Max)             // 🚨 MỚI: Chỉ lưu từ khóa tìm kiếm (JSON Array)
+  bio              String?   @db.NVarChar(500)             // Tiểu sử ngắn
+  socialLinks      String?   @db.NVarChar(Max)             // Lưu mảng JSON chứa các link MXH
+  privacySettings  String?   @db.NVarChar(Max)
+  notificationSettings  String?   @db.NVarChar(Max)
+  
+  // --- B. Hệ thống Gamification & Tiền tệ ---
+  level            Int       @default(1)                   // Cấp độ hiện tại của học viên (Bắt đầu từ 1)
+  xp               Int      @default(0)                   // Thanh kinh nghiệm hiện có (Ví dụ: 450)
+  freeCoins        Int       @default(0)                   // [1] XU GACHA: Kiếm qua học/nhiệm vụ -> Dùng quay thẻ Wiki
+  aiTokens         Int       @default(0)                   // [2] XU TRÍ TUỆ (Năng lượng): Phát hàng ngày -> Dùng tạo câu hỏi AI
+  premiumCoins     Int       @default(0)                   // [3] XU NẠP: Mua bằng VNĐ -> Dùng để đổi ra Xu Gacha hoặc Xu AI
+  stardust         Int       @default(0)                   // Bụi Sao (Có được khi quay trùng thẻ, dùng để ghép UR)
+  pitySR           Int       @default(0)                   // Đếm đến 10
+  pitySSR          Int       @default(0)                   // Đếm đến 50
+  pityUR           Int       @default(0)                   // Đếm đến 120
+  isPro            Boolean   @default(false)               // Đánh dấu tài khoản VIP (True = Hiện tag PRO)
+  premiumExpiresAt DateTime?                               // Mốc thời gian hết hạn gói VIP (Null = Acc thường)
+  gracePeriodEndsAt DateTime?                              // Mốc hết hạn 3 ngày bảo lưu năng lượng
+  lastDailyCoinGrant DateTime?                             // Ngày cuối cùng nhận xu điểm danh (Tránh nhận 2 lần/ngày)
+  lastFreeGachaDate DateTime?                              // 🚨 THÊM DÒNG NÀY: Mốc thời gian quay Gacha Free gần nhất của tài khoản PRO
+  
+  // --- C. Hệ thống Streak (Hình ngọn lửa 🔥) ---
+  currentStreak    Int       @default(0)                   // Chuỗi ngày học liên tục hiện tại
+  highestStreak    Int       @default(0)                   // Kỷ lục chuỗi ngày học dài nhất từng đạt
+  lastStudyDate    DateTime?                               // Lưu mốc ngày học cuối cùng để tính đứt chuỗi
+  streakFreezes    Int       @default(0)                   // Số thẻ "Bảo vệ chuỗi" đang có trong túi đồ
+
+  // --- D. Cài đặt hệ thống AI ---
+  targetLanguage   String?   @default("en")                // Ngôn ngữ mục tiêu muốn học (en, ja, ko...)
+  languageLevel    String?   @default("A2")                // Trình độ mong muốn để AI điều chỉnh bài đọc (A1-C2)
+
+  // --- E. Các mối quan hệ (Khóa ngoại) ---
+  stats            UserStats?                              // Trỏ đến Bảng Thống kê chi tiết (1-1)
+  accounts         Account[]                               // Trỏ đến Bảng liên kết Google/Github
+  sessions         Session[]                               // Trỏ đến Bảng Phiên đăng nhập
+  inventory        UserInventory[]                         // Trỏ đến Bảng Tủ đồ chứa thẻ Wiki
+  chatMessages     ChatMessage[]     @relation("SentMessages") // Trỏ đến Bảng Lịch sử chat (Tin đã gửi)
+  receivedMsgs     ChatMessage[]     @relation("ReceivedMessages") // Trỏ đến Bảng Lịch sử chat (Tin nhận 1-1)
+  dailyTasks       UserTaskProgress[]                      // Trỏ đến Bảng Tiến độ nhiệm vụ ngày
+  createdVideos    Video[]           @relation("VideoCreator") // Trỏ đến Bảng Video do user này nhập link
+  progress         UserProgress[]                          // Trỏ đến Bảng Tiến độ xem video
+  quizAttempts     QuizAttempt[]                           // Trỏ đến Bảng Lịch sử làm bài trắc nghiệm
+  dailyGachas      DailyGacha[]                            // Trỏ đến Bảng Lịch sử những ngày quay thẻ
+  achievements     UserAchievement[]                       // Trỏ đến Bảng Các huy hiệu đã nhận
+  orders           Order[]                                 // Trỏ đến Bảng Lịch sử hóa đơn MoMo
+  coinTransactions CoinTransaction[]                       // Trỏ đến Bảng Sổ cái biến động số dư
+  freezeUsage      StreakFreezeUsage[]                     // Trỏ đến Bảng Lịch sử dùng thẻ bảo vệ
+  friendships1     Friendship[]      @relation("User1")    // Trỏ đến Bảng Lời mời kết bạn (Mình gửi)
+  friendships2     Friendship[]      @relation("User2")    // Trỏ đến Bảng Lời mời kết bạn (Mình nhận)
+  chatGroups       GroupMember[]                           // Trỏ đến Bảng Các nhóm chat đang tham gia
+  wikiAttempts     WikiQuizAttempt[]                       // Trỏ đến Bảng Lịch sử làm bài thẻ Wiki
+  dailyStats       DailyStat[]       @relation("UserDailyStats") // Trỏ đến Bảng Thống kê hàng ngày (Dùng cho Xếp hạng)
+
+  @@map("users") // Đặt tên bảng thực tế dưới CSDL là 'users'
+}
+
+// Bảng Thống Kê Chi Tiết (Cho Dashboard Report)
+model UserStats {
+  id                  Int   @id @default(autoincrement()) // Khóa chính tự tăng
+  userId              String   @unique                       // Khóa ngoại trỏ về User (Bắt buộc duy nhất vì quan hệ 1-1)
+  
+  totalVideoWatched   Int   @default(0)                   // Tổng số Video đã học xong
+  totalStudySeconds   Int   @default(0)                   // Tổng thời gian học (Tính bằng giây)
+  correctQuizAnswers  Int   @default(0)                   // Tổng số câu Quiz đã trả lời ĐÚNG
+  totalQuizAttempts   Int   @default(0)                   // Tổng số lần làm Quiz (Đúng/Sai đều tính)
+  learnedWordsCount   Int   @default(0)                   // Tổng số từ vựng mới học được
+  totalGachaPulls     Int   @default(0)                   // Tổng số lần đã bấm nút Quay Gacha
+  sharedCardsCount    Int   @default(0)                   // Số lần đã share thẻ SSR cho bạn bè
+  messagesSentCount   Int   @default(0)                   // Tổng số tin nhắn đã chat
+
+  totalCoinsSpent     Int   @default(0)                   // Tổng Xu Gacha đã tiêu
+  totalAiEnergySpent  Int   @default(0)                   // Tổng Năng lượng AI đã xài
+
+  user                User  @relation(fields: [userId], references: [id], onDelete: Cascade) // Xóa User -> Xóa Thống kê
+  
+  @@map("user_stats")
+}
+
+// ==========================================
+// 2. VIDEO YOUTUBE & TRẮC NGHIỆM AI
+// ==========================================
+
+model YoutubeSearchCache {
+  cacheKey     String   @id @db.NVarChar(500)
+  responseJson String   @db.NVarChar(Max)
+  lastUpdated  DateTime @default(now())
+
+  @@map("youtube_search_cache")
+}
+
+model FavoriteVideo {
+  id           Int      @id @default(autoincrement())
+  userId       String   // Đổi sang String để khớp với Auth.js CUID
+  videoId      String
+  title        String?
+  channelTitle String?
+  thumbnailUrl String?
+  createdAt    DateTime @default(now())
+
+  @@unique([userId, videoId])
+  @@map("favorite_videos")
+}
+
+model FavoritePlaylist {
+  id           Int      @id @default(autoincrement())
+  userId       String   // Đảm bảo khớp với id của User (CUID)
+  playlistId   String   // ID của Playlist trên YouTube
+  title        String?
+  channelTitle String?
+  thumbnailUrl String?
+  summaryScore Float    @default(0)
+  updatedAt    DateTime @default(now()) @updatedAt
+  totalVideos  Int      @default(0)
+  videoIds     String   @default("")
+  createdAt    DateTime @default(now())
+
+  @@unique([userId, playlistId]) // Chống 1 user lưu 1 playlist 2 lần
+  @@map("favorite_playlists")
+}
+
+model Category {
+  id          Int      @id @default(autoincrement()) // Khóa chính
+  name        String   @unique                       // Tên danh mục (VD: Công nghệ)
+  description String?  @db.NVarChar(500)             // Mô tả danh mục
+  videos      Video[]                                // Trỏ đến Bảng Video thuộc danh mục này
+  
+  @@map("categories")
+}
+
+model Video {
+  id              Int      @id @default(autoincrement()) // Khóa chính
+  categoryId      Int?                                   // Khóa ngoại trỏ về Category (Có thể null)
+  youtubeUrl      String   @unique                       // Link YouTube do người dùng dán vào (Không được trùng)
+  title           String   @db.NVarChar(255)             // Tiêu đề video lấy tự động từ YouTube
+  channelName     String   @db.NVarChar(255)             // Tên kênh YouTube đăng video đó
+  description     String?  @db.NVarChar(Max)             // Mô tả video (Rất dài nên dùng Max)
+  thumbnail       String   @db.NVarChar(500)             // Link URL ảnh bìa (Thumbnail) của video
+  duration        Int                                    // Độ dài video tính bằng giây
+  
+  addedByUserId   String?                                   // Khóa ngoại: Ai là người đầu tiên dán link này vào web
+  likesCount      Int      @default(0)                   // Tổng lượt Thích
+  dislikesCount   Int      @default(0)                   // Tổng lượt Không thích
+  
+  category        Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull) // Xóa DM -> Chuyển thành Chưa phân loại
+  creator         User?     @relation("VideoCreator", fields: [addedByUserId], references: [id], onDelete: SetNull) // Xóa User -> Video vẫn còn
+  quizzes         Quiz[]                                 // Trỏ đến Bảng Câu hỏi trắc nghiệm
+  progress        UserProgress[]                         // Trỏ đến Bảng Tiến độ xem của học viên
+  attempts        QuizAttempt[]                          // Trỏ đến Bảng Lịch sử làm bài
+  chatGroup       ChatGroup[]                             // Trỏ đến Box chat của video này
+  
+  @@map("videos")
+}
+
+model Quiz {
+  id              Int      @id @default(autoincrement()) // Khóa chính
+  videoId         Int                                    // Khóa ngoại trỏ về Video
+  triggerAtSecond Int                                    // Mốc thời gian (Giây) sẽ dừng video để hiện popup
+  question        String   @db.NVarChar(Max)             // Nội dung câu hỏi AI tự tạo
+  explanation     String?  @db.NVarChar(Max)             // Lời giải thích của AI cho câu hỏi này
+  createdAt       DateTime @default(now())               // Thời gian câu hỏi được tạo
+  
+  video           Video    @relation(fields: [videoId], references: [id], onDelete: Cascade) // Xóa Video -> Xóa Câu hỏi
+  options         QuizOption[]                           // Trỏ đến Bảng Lựa chọn (Các đáp án A, B, C)
+
+  @@map("quizzes")
+}
+
+model QuizOption {
+  id              Int      @id @default(autoincrement()) // Khóa chính
+  quizId          Int                                    // Khóa ngoại trỏ về Câu hỏi
+  content         String   @db.NVarChar(500)             // Nội dung đáp án
+  isCorrect       Boolean  @default(false)               // Cờ đánh dấu: Nếu True thì đây là đáp án đúng
+  
+  quiz            Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade) // Xóa Câu hỏi -> Xóa Đáp án
+  
+  @@map("quiz_options")
+}
+
+// ==========================================
+// 3. GACHA WIKI & TỦ ĐỒ (Học ngôn ngữ)
+// ==========================================
+
+model WikiCard {
+  id              Int      @id @default(autoincrement()) // Khóa chính
+  wikiUrl         String?  @unique                       // Link URL bài viết gốc trên Wikipedia
+  title           String   @db.NVarChar(255)             // Tên thẻ (VD: Thuyết Tương Đối)
+  rarity          String   @default("R")                 // Độ hiếm quy định viền UI: R, SR, SSR
+  imageUrl        String?                                // Link URL hình minh họa thẻ bài
+  aiContent       String   @db.NVarChar(Max)             // Bài học đã được AI viết lại phù hợp trình độ
+  totalStars      Int      @default(1)                   // Tổng số Sao cần học (N, R, SR, SSR, UR, LR, MR, tương ứng 1,2,3,4,5,6,7 sao)
+  awakenedStars   Int      @default(0)                   // Số sao đã thức tỉnh (mặc định là 0)
+  contentText     String?  @db.NVarChar(Max)             // Text thô cào từ Wiki (Dùng làm backup cho AI đọc)
+  chunkData       String?  @db.NVarChar(Max)             // Chuỗi JSON mảng các "khúc" văn bản đã băm nhỏ
+
+  vocabularies    Vocabulary[]                           // Trỏ đến Bảng Các từ vựng của thẻ này
+  owners          UserInventory[]                        // Trỏ đến Bảng Tủ đồ của những người có thẻ này
+  
+  attempts        WikiQuizAttempt[]                      // Trỏ đến Bảng Lịch sử làm bài của thẻ này
+  @@index([rarity]) // Tạo index để truy vấn theo độ hiếm nhanh hơn
+  @@map("wiki_cards")
+}
+
+model UserInventory {
+  id             Int      @id @default(autoincrement()) // Khóa chính
+  userId         String                                    // Khóa ngoại trỏ về User (Tủ đồ của ai)
+  cardId         Int                                    // Khóa ngoại trỏ về Thẻ (Là thẻ gì)
+  acquiredAt     DateTime @default(now())               // Mốc thời gian quay trúng thẻ
+  isNew          Boolean  @default(true)                // Cờ đánh dấu UI: True = Mới nhận (Hiện chấm đỏ)
+  currentStar    Int      @default(0)                   // Tiến độ học hiện tại: Đang ở sao số mấy
+  canShareCount  Int      @default(1)                   // Biến đếm: Số lần được share free (Mặc định 1)
+  source         String   @default("GACHA")             // Nguồn thẻ: GACHA (Tự quay) hoặc SHARED (Được tặng)
+  isCompleted    Boolean  @default(false)               // Cờ: True = Đã học full sao
+  
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  card           WikiCard @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, cardId]) // Mỗi user chỉ được giữ 1 bản sao của 1 thẻ (Chống trùng lặp)
+  @@map("user_inventory")
+}
+
+model WikiQuizAttempt {
+  id           Int      @id @default(autoincrement()) // Khóa chính
+  userId       String                                 // Người thi
+  cardId       Int                                    // Thi bộ câu hỏi của Thẻ Wiki nào
+  score        Float                                  // Điểm số quy đổi
+  correctCount Int                                    // Số câu trả lời đúng
+  totalQuizzes Int                                    // Tổng số câu hỏi của bài thi
+  createdAt    DateTime @default(now())               // Thời gian nộp bài
+
+  userAnswers    String?  @db.NVarChar(Max)           // Lưu các đáp án user đã chọn (VD: '["A", "B", "C"]')
+  lessonSnapshot String?  @db.NVarChar(Max)           // Lưu lại toàn bộ đoạn văn & câu hỏi của lần thi này
+  
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  card         WikiCard @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  
+  @@map("wiki_quiz_attempts")
+}
+
+model Vocabulary {
+  id              Int      @id @default(autoincrement()) // Khóa chính
+  cardId          Int                                    // Khóa ngoại trỏ về WikiCard
+  word            String   @db.NVarChar(255)             // Từ vựng tiếng nước ngoài
+  pos             String?                                // Phần loại từ (Danh từ, Động từ...)
+  meaning         String   @db.NVarChar(500)             // Ý nghĩa tiếng Việt
+  englishDesc     String?  @db.NVarChar(Max)             // Mô tả tiếng Anh 
+  language        String?  @default("Tiếng Anh")         // Lưu ngôn ngữ của từ
+  
+  card            WikiCard @relation(fields: [cardId], references: [id], onDelete: Cascade)
+   
+  @@map("vocabularies")
+}
+
+model DailyGacha {
+  id          Int      @id @default(autoincrement()) // Khóa chính
+  userId      String                                    // Ai là người mở cửa hàng hôm nay
+  date        DateTime @default(now()) @db.Date    // Ngày mở cửa hàng (Loại bỏ Giờ để chuẩn SQL)
+  cardListIds String   @db.NVarChar(Max)             // Chuỗi JSON lưu ID 5 thẻ random (VD: "[1,2,3,4,5]")
+  claimedIds  String   @default("[]")                // Chuỗi JSON lưu ID các thẻ user đã chọn lấy
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: NoAction)
+  
+  @@unique([userId, date]) // Đảm bảo 1 user 1 ngày chỉ có 1 cửa hàng Gacha
+  @@map("daily_gachas")
+}
+
+// ==========================================
+// 4. TIẾN ĐỘ, NHIỆM VỤ & THÀNH TỰU
+// ==========================================
+
+model UserProgress {
+  id          Int      @id @default(autoincrement()) // Khóa chính
+  userId      String                                    // Của ai
+  videoId     Int                                    // Tiến độ của video nào
+  lastWatched Int      @default(0)                   // Giây cuối cùng đang xem dở (Để tua tiếp)
+  isCompleted Boolean  @default(false)               // Cờ: Đã xem hết video chưa
+  updatedAt   DateTime @default(now()) @updatedAt    // Để biết video nào xem gần nhất
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  video       Video    @relation(fields: [videoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  
+  @@unique([userId, videoId]) // 1 video 1 user chỉ có 1 tiến độ
+  @@map("user_progress")
+}
+
+model QuizAttempt {
+  id           Int      @id @default(autoincrement()) // Khóa chính
+  userId       String                                    // Người thi
+  videoId      Int                                    // Thi bộ câu hỏi của video nào
+  score        Float                                  // Điểm số quy đổi
+  correctCount Int                                    // Số câu trả lời đúng
+  totalQuizzes Int                                    // Tổng số câu hỏi của bài thi
+  updatedAt    DateTime @default(now()) @updatedAt
+  questionsData String? @db.NVarChar(Max)
+  createdAt    DateTime @default(now())               // Thời gian nộp bài
+  
+  user         User     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  video        Video    @relation(fields: [videoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  
+  @@map("quiz_attempts")
+}
+
+model DailyTask {
+  id              Int      @id @default(autoincrement()) // Khóa chính
+  taskDesc        String   @db.NVarChar(255)             // Tên nhiệm vụ (Mở Gacha 1 lần)
+  taskType        String   @default("GENERAL")           // Mã phân loại logic (GACHA, QUIZ, WATCH)
+  target          Int      @default(1)                   // Mục tiêu số lượng cần làm (VD: 1)
+  rewardCoins     Int      @default(10)                  // Thưởng Xu cày cuốc
+  rewardXp        Int      @default(0)                   // Thưởng Kinh nghiệm XP
+  
+  usersProgress   UserTaskProgress[]                     // Trỏ đến Bảng Tiến độ làm nhiệm vụ của học viên
+  isProOnly       Boolean  @default(false)
+  
+  @@map("daily_tasks")
+}
+
+model UserTaskProgress {
+  id              Int      @id @default(autoincrement()) // Khóa chính
+  userId          String                                    // Người làm nhiệm videoId
+  taskId          Int                                    // Đang làm nhiệm vụ nào
+  current         Int      @default(0)                   // Đã làm được bao nhiêu (Tiến độ)
+  isClaimed       Boolean  @default(false)               // Cờ: True = Đã bấm nhận thưởng (Không cho nhận lại)
+  assignedDate    DateTime @default(now()) @db.Date    // Ngày hệ thống giao nhiệm vụ
+  
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task            DailyTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, taskId, assignedDate]) // 1 Ngày 1 User chỉ có 1 tiến độ cho 1 Task
+  @@map("user_task_progress")
+}
+
+model Achievement {
+  id          Int      @id @default(autoincrement()) // Khóa chính
+  code        String   @unique                       // Mã code nhận diện (VD: FIRST_BLOOD)
+  name        String   @db.NVarChar(255)             // Tên huy hiệu hiển thị trên UI
+  description String   @db.NVarChar(500)             // Giải thích điều kiện nhận
+  rewardXp    Int      @default(100)                 // Thưởng XP cực lớn
+  
+  users       UserAchievement[]                      // Trỏ đến Bảng Những người đã có huy hiệu này
+  
+  @@map("achievements")
+}
+
+model UserAchievement {
+  id            Int      @id @default(autoincrement()) // Khóa chính
+  userId        String                                    // Người nhận huy hiệu
+  achievementId Int                                    // ID huy hiệu nhận được
+  unlockedAt    DateTime @default(now())               // Thời gian nhận
+  
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, achievementId]) // Mỗi huy hiệu chỉ nhận 1 lần
+  @@map("user_achievements")
+}
+
+// ==========================================
+// 5. CỘNG ĐỒNG & CHAT (Social)
+// ==========================================
+
+model ChatMessage {
+  id              Int      @id @default(autoincrement()) // Khóa chính
+  senderId        String                                    // Khóa ngoại: Ai gửi?
+  receiverId      String?                                   // Khóa ngoại: Gửi cho ai (Chat 1-1)
+  groupId         Int?                                   // Khóa ngoại: Gửi vào Nhóm nào
+  content         String   @db.NVarChar(Max)             // Nội dung chữ
+  isGiftCard      Boolean  @default(false)               // Cờ UI: True = Render thành Hộp Quà SSR
+  createdAt       DateTime @default(now())               // Gửi lúc nào
+  messageType     String   @default("TEXT")              // TEXT, IMAGE, WIKI_CARD
+  fileUrl         String?  @db.NVarChar(Max)                             // Lưu link ảnh hoặc link Wiki Card
+  
+  // Dùng NoAction để SQL Server không báo lỗi Multiple Cascade Paths
+  sender          User       @relation("SentMessages", fields: [senderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  receiver        User?      @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  group           ChatGroup? @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  
+  @@map("chat_messages")
+}
+
+model ChatGroup {
+  id           Int      @id @default(autoincrement()) // Khóa chính
+  name         String   @db.NVarChar(255)             // Tên nhóm chat
+  avatar       String?  @db.NVarChar(Max)
+  leaderId     String?
+  isVideoGroup Boolean  @default(false)               // Cờ: True = Box chat này dính liền với 1 Video
+  videoId      Int?                            // ID video nếu là Box Chat Video
+  
+  video        Video?   @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  members      GroupMember[]                          // Trỏ đến Bảng Những người trong nhóm
+  messages     ChatMessage[]                          // Trỏ đến Bảng Lịch sử tin nhắn
+  
+  @@map("chat_groups")
+}
+
+model GroupMember {
+  id       Int      @id @default(autoincrement()) // Khóa chính
+  groupId  Int                                    // ID Nhóm
+  userId   String                                    // ID Thành viên
+  joinedAt DateTime @default(now())               // Ngày vào nhóm
+  
+  group    ChatGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user     User      @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  
+  @@unique([groupId, userId]) // Không được tham gia 1 nhóm 2 lần
+  @@map("group_members")
+}
+
+model Friendship {
+  id          Int      @id @default(autoincrement()) // Khóa chính
+  userId1     String                                    // ID người gửi lời mời
+  userId2     String                                    // ID người nhận lời mời
+  status      String   @default("PENDING")           // Trạng thái: PENDING (Chờ), ACCEPTED (Đồng ý), BLOCKED (Chặn)
+  createdAt   DateTime @default(now())               // Ngày kết bạn
+  
+  // Dùng NoAction để SQL Server không báo lỗi vòng lặp
+  user1       User     @relation("User1", fields: [userId1], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user2       User     @relation("User2", fields: [userId2], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  
+  @@unique([userId1, userId2]) // 2 người chỉ có 1 trạng thái quan hệ duy nhất
+  @@map("friendships")
+}
+
+// ==========================================
+// 6. KINH TẾ & THANH TOÁN MOMO
+// ==========================================
+
+model SubscriptionPlan {
+  id          Int      @id @default(autoincrement()) // Khóa chính
+  name        String                                 // Tên gói VIP
+  price       Float                                  // Giá bán VND
+  durationDay Int                                    // Thời hạn sử dụng (Ngày)
+  
+  orders      Order[]                                // Trỏ đến Bảng Đơn hàng
+  @@map("subscription_plans")
+}
+
+model CoinPackage {
+  id          Int      @id @default(autoincrement()) // Khóa chính
+  name        String                                 // Tên gói Xu
+  price       Float                                  // Giá bán VND
+  coinAmount  Int                                    // Số lượng Xu Nạp nhận được
+  
+  orders      Order[]                                // Trỏ đến Bảng Đơn hàng
+  @@map("coin_packages")
+}
+
+model Order {
+  id          Int      @id @default(autoincrement()) // Khóa chính
+  orderCode   String   @unique                       // Mã đơn gửi MoMo (VD: ORD123)
+  userId      String                                    // Ai mua
+  planId      Int?                                   // ID Gói VIP (Nếu có)
+  packageId   Int?                                   // ID Gói Xu (Nếu có)
+  amount      Float                                  // Tổng tiền mặt phải thanh toán
+  status      String   @default("PENDING")           // Trạng thái MoMo: PENDING, SUCCESS, FAILED
+  momoTransId String?                                // Mã đối soát trả về từ MoMo
+  type        String                                 // Phân loại đơn: "SUBSCRIPTION" hay "COIN"
+  createdAt   DateTime @default(now())               // Thời điểm tạo đơn
+  
+  user        User              @relation(fields: [userId], references: [id], onDelete: NoAction)
+  plan        SubscriptionPlan? @relation(fields: [planId], references: [id], onDelete: NoAction)
+  package     CoinPackage?      @relation(fields: [packageId], references: [id], onDelete: NoAction)
+  
+  @@map("orders")
+}
+
+model CoinTransaction {
+  id           Int      @id @default(autoincrement()) // Khóa chính
+  userId       String                                    // Giao dịch của ai
+  amount       Int                                    // Số lượng: +10 (Cộng) hoặc -10 (Trừ)
+  currencyType String   @default("FREE")             // Dùng ví nào: FREE (Xu thường) hay PREMIUM (Xu nạp)
+  reason       String   @db.NVarChar(255)            // Diễn giải (VD: Thu phí Gacha)
+  createdAt    DateTime @default(now())               // Thời gian giao dịch
+  
+  user         User     @relation(fields: [userId], references: [id], onDelete: NoAction)
+  
+  @@map("coin_transactions")
+}
+
+model StreakFreezeUsage {
+  id     Int      @id @default(autoincrement()) // Khóa chính
+  userId String                                    // Ai dùng thẻ bảo vệ
+  usedAt DateTime @default(now())               // Dùng lúc nào
+  
+  user   User     @relation(fields: [userId], references: [id], onDelete: NoAction)
+  @@map("streak_freeze_usage")
+}
+
+// ==========================================
+// 7. CẤU HÌNH BẮT BUỘC CỦA AUTH.JS V5
+// ==========================================
+
+model Account {
+  id                 Int     @id @default(autoincrement()) // Khóa chính
+  userId             String                                   // Khóa ngoại trỏ về User
+  type               String                                // Loại kết nối (oauth)
+  provider           String                                // Nhà cung cấp (google, github)
+  providerAccountId  String                                // ID người dùng bên nhà cung cấp
+  refresh_token      String? @db.Text                      // Token làm mới (Dùng db.Text để không giới hạn)
+  access_token       String? @db.Text                      // Token truy cập
+  expires_at         Int?                                  // Mốc hết hạn token
+  token_type         String?                               // Loại token (Bearer)
+  scope              String?                               // Các quyền đã xin
+  id_token           String? @db.Text                      // Chuỗi JWT định danh
+  session_state      String?                               // Trạng thái phiên
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([provider, providerAccountId]) // Ngăn 1 tk Google liên kết nhiều lần
+  @@map("accounts")
+}
+
+model Session {
+  id           Int      @id @default(autoincrement()) // Khóa chính
+  sessionToken String   @unique                       // Chuỗi token của phiên
+  userId       String                                    // Khóa ngoại trỏ về User
+  expires      DateTime                               // Hết hạn phiên
+  
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@map("sessions")
+}
+model VerificationCode {
+  id        Int      @id @default(autoincrement())
+  email     String
+  code      String   // Mã OTP 6 số
+  expiresAt DateTime // Thời gian hết hạn
+  createdAt DateTime @default(now())
+
+  @@unique([email, code]) // Đảm bảo không trùng mã của cùng 1 email
+  @@map("verification_codes")
+}
+
+// ==========================================
+// 8. BẢNG XẾP HẠNG (THỐNG KÊ THEO NGÀY TỪ NHÁNH MAIN)
+// ==========================================
+model DailyStat {
+  id                 Int      @id @default(autoincrement())
+  userId             String
+  date               DateTime @db.Date // Chỉ lưu Ngày-Tháng-Năm để dễ group by
+  xpGained           Int      @default(0) // Số XP kiếm được trong ngày
+  studySeconds       Int      @default(0) // Thời gian học trong ngày
+  correctAnswers     Int      @default(0) // Số câu đúng trong ngày
+  quizAttempts       Int      @default(0) // Số câu đã làm trong ngày
+
+  user               User     @relation("UserDailyStats", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date]) // Đảm bảo 1 user chỉ có 1 record mỗi ngày
+  @@index([date]) // Tối ưu tốc độ khi query theo ngày/tuần/tháng
+  @@map("daily_stats")
+}
+
+// =====================================
+// MODULE: ADMIN - QUẢN LÝ HỌC TẬP TỔNG HỢP
+// (Đã Fix lỗi tương thích SQL Server)
+// =====================================
+
+// 1. Quản lý Bộ lọc Từ khóa (Không cần sửa code để thêm/bớt từ khóa nữa)
+model FilterKeyword {
+  id        Int      @id @default(autoincrement())
+  word      String   @unique
+  type      String   // Dùng String thay vì Enum: "BLACKLIST" hoặc "WHITELIST"
+  isActive  Boolean  @default(true) 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 2. Bảng Quản lý Video Đã Kiểm Duyệt (Moderation Queue & Banned)
+model ModeratedVideo {
+  id          Int      @id @default(autoincrement())
+  videoId     String   @unique 
+  title       String?  
+  channelName String?
+  status      String   // Dùng String: "BANNED" (Cấm) hoặc "APPROVED" (Miễn kiểm duyệt)
+  reason      String?  
+  moderatedBy String?  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// 3. Hệ thống Báo cáo Cộng đồng (User Report)
+model ReportedVideo {
+  id          Int      @id @default(autoincrement())
+  videoId     String   
+  title       String
+  channelName String?
+  reason      String   
+  reportedBy  String   
+  status      String   @default("PENDING") // Dùng String: "PENDING", "RESOLVED", "IGNORED"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+model Feedback {
+  id        Int      @id @default(autoincrement())
+  userId    String?  // Có thể null nếu user chưa đăng nhập vẫn muốn góp ý ẩn danh
+  userName  String?
+  content   String   @db.Text
+  status    String   @default("NEW") // Trạng thái: NEW (Mới), READ (Đã đọc)
+  createdAt DateTime @default(now())
+}
+model InterestTag {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+}
