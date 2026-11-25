@@ -148,6 +148,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       body: BlocConsumer<ProfileCubit, ProfileState>(
         listener: (context, state) {
+          if (state.status == ProfileStatus.loaded && state.profile != null) {
+            final p = state.profile!;
+            try {
+              context.read<AuthBloc>().add(AuthUserProfileUpdated(
+                fullName: p.fullName,
+                username: p.username,
+                image: p.displayAvatar,
+                avatar: p.displayAvatar,
+              ));
+            } catch (_) {}
+          }
           if (state.errorMessage != null && state.status == ProfileStatus.error) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(

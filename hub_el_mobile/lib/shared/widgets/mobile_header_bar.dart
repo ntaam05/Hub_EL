@@ -448,13 +448,15 @@ class _MobileHeaderBarState extends State<MobileHeaderBar> {
                     ResourcePill(
                       type: ResourcePillType.streak,
                       value: '${widget.user.currentStreak}',
+                      isActive: widget.user.isStudiedToday,
                       onTap: () {
                         // Kích hoạt đồng bộ trạng thái mới nhất từ server
-                        context.read<AuthBloc>().add(const AuthCheckRequested());
+                        context.read<AuthBloc>().add(const AuthUserRefreshed());
                         StreakDialog.show(
                           context,
                           streak: widget.user.currentStreak,
                           streakFreezes: widget.user.streakFreezes,
+                          isStudiedToday: widget.user.isStudiedToday,
                         );
                       },
                     ),

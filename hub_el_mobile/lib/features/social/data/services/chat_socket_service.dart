@@ -19,6 +19,9 @@ class ChatSocketService {
     if (_socket != null && _socket!.connected && _connectedUserId == currentUserId) {
       return;
     }
+    if (_socket != null && _connectedUserId != currentUserId) {
+      disconnect();
+    }
 
     _connectedUserId = currentUserId;
     final serverUrl = AppConfig.webSocketUrl;
@@ -93,9 +96,23 @@ class ChatSocketService {
     });
   }
 
+  /// Đăng ký hàm lắng nghe cập nhật hồ sơ / ảnh đại diện realtime
+  void onProfileUpdated(void Function(Map<String, dynamic> data) onUpdated) {
+    _socket?.off('profile_updated');
+    _socket?.on('profile_updated', (data) {
+      debugPrint('📥 [Socket.IO] Nhận cập nhật hồ sơ realtime');
+      if (data is Map<String, dynamic>) {
+        onUpdated(data);
+      } else if (data is Map) {
+        onUpdated(Map<String, dynamic>.from(data));
+      }
+    });
+  }
+
   /// Ngắt kết nối socket
   void disconnect() {
     _socket?.off('receive_message');
+    _socket?.off('profile_updated');
     _socket?.disconnect();
     _socket?.dispose();
     _socket = null;

@@ -16,6 +16,7 @@ class ResourcePill extends StatelessWidget {
   final String value;
   final VoidCallback? onTap;
   final bool isAnimated;
+  final bool isActive;
 
   const ResourcePill({
     super.key,
@@ -23,6 +24,7 @@ class ResourcePill extends StatelessWidget {
     required this.value,
     this.onTap,
     this.isAnimated = false,
+    this.isActive = true,
   });
 
   @override
@@ -37,9 +39,15 @@ class ResourcePill extends StatelessWidget {
     switch (type) {
       case ResourcePillType.streak:
         iconData = LucideIcons.flame;
-        mainColor = AppColors.streak;
-        bgColor = isDark ? AppColors.streak.withValues(alpha: 0.12) : AppColors.streakLight;
-        borderColor = isDark ? AppColors.streak.withValues(alpha: 0.3) : AppColors.streakBorder;
+        if (isActive) {
+          mainColor = AppColors.streak;
+          bgColor = isDark ? AppColors.streak.withValues(alpha: 0.12) : AppColors.streakLight;
+          borderColor = isDark ? AppColors.streak.withValues(alpha: 0.3) : AppColors.streakBorder;
+        } else {
+          mainColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+          bgColor = isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9);
+          borderColor = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+        }
         break;
       case ResourcePillType.energy:
         iconData = LucideIcons.zap;

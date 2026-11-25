@@ -70,6 +70,7 @@ class AuthenticatedHomeScreen extends StatelessWidget {
                   ResourcePill(
                     type: ResourcePillType.streak,
                     value: '${user.currentStreak} Ngày',
+                    isActive: user.isStudiedToday,
                   ),
                   AppSpacing.gapH8,
                   ResourcePill(

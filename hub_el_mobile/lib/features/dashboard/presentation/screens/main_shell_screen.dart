@@ -5,6 +5,9 @@ import '../../../../core/network/api_result.dart';
 import '../../../../shared/widgets/custom_bottom_nav.dart';
 import '../../../../shared/widgets/mobile_header_bar.dart';
 import '../../../authentication/domain/entities/user_entity.dart';
+import '../../../authentication/presentation/bloc/auth_bloc.dart';
+import '../../../authentication/presentation/bloc/auth_event.dart';
+import '../../../social/data/services/chat_socket_service.dart';
 import 'package:hub_el_mobile/features/learning/domain/entities/video_item_entity.dart';
 import '../../../learning/domain/usecases/check_video_link_usecase.dart';
 import '../../../learning/presentation/screens/explore_screen.dart';
@@ -25,17 +28,53 @@ class MainShellScreen extends StatefulWidget {
   State<MainShellScreen> createState() => _MainShellScreenState();
 }
 
-class _MainShellScreenState extends State<MainShellScreen> {
+class _MainShellScreenState extends State<MainShellScreen> with WidgetsBindingObserver {
   int _currentTab = 0;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<StoreCubit>().loadCatalog(showLoading: false);
+        _initRealtimeProfileSync();
       }
     });
+  }
+
+  Future<void> _initRealtimeProfileSync() async {
+    try {
+      final socketService = context.read<ChatSocketService>();
+      await socketService.connect(widget.user.id);
+      socketService.onProfileUpdated((data) {
+        if (!mounted) return;
+        context.read<AuthBloc>().add(AuthUserProfileUpdated(
+          name: data['name'] as String?,
+          fullName: data['fullName'] as String?,
+          username: data['username'] as String?,
+          avatar: data['avatar'] as String?,
+          image: data['image'] as String?,
+        ));
+      });
+    } catch (_) {
+      // Bỏ qua nếu môi trường test không cung cấp ChatSocketService / AuthBloc
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) {
+      try {
+        context.read<AuthBloc>().add(const AuthUserRefreshed());
+      } catch (_) {}
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   @override

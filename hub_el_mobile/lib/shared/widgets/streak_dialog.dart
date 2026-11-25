@@ -7,17 +7,28 @@ import '../../core/theme/app_text_styles.dart';
 class StreakDialog extends StatelessWidget {
   final int streak;
   final int streakFreezes;
+  final bool isStudiedToday;
 
   const StreakDialog({
     super.key,
     required this.streak,
     required this.streakFreezes,
+    this.isStudiedToday = true,
   });
 
-  static Future<void> show(BuildContext context, {required int streak, required int streakFreezes}) {
+  static Future<void> show(
+    BuildContext context, {
+    required int streak,
+    required int streakFreezes,
+    bool isStudiedToday = true,
+  }) {
     return showDialog(
       context: context,
-      builder: (ctx) => StreakDialog(streak: streak, streakFreezes: streakFreezes),
+      builder: (ctx) => StreakDialog(
+        streak: streak,
+        streakFreezes: streakFreezes,
+        isStudiedToday: isStudiedToday,
+      ),
     );
   }
 
@@ -37,10 +48,14 @@ class StreakDialog extends StatelessWidget {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: AppColors.streak.withValues(alpha: 0.15),
+                color: (isStudiedToday ? AppColors.streak : const Color(0xFF94A3B8)).withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(LucideIcons.flame, color: AppColors.streak, size: 32),
+              child: Icon(
+                LucideIcons.flame,
+                color: isStudiedToday ? AppColors.streak : const Color(0xFF94A3B8),
+                size: 32,
+              ),
             ),
             AppSpacing.gapV12,
             Text(

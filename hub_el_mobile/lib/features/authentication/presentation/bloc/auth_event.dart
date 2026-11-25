@@ -109,6 +109,23 @@ class AuthUserBalanceUpdated extends AuthEvent {
   });
 }
 
+/// Cập nhật thông tin hồ sơ / ảnh đại diện của User thời gian thực
+class AuthUserProfileUpdated extends AuthEvent {
+  final String? name;
+  final String? fullName;
+  final String? username;
+  final String? avatar;
+  final String? image;
+
+  const AuthUserProfileUpdated({
+    this.name,
+    this.fullName,
+    this.username,
+    this.avatar,
+    this.image,
+  });
+}
+
 /// Yêu cầu làm mới thông tin User từ backend
 class AuthUserRefreshed extends AuthEvent {
   const AuthUserRefreshed();

@@ -279,6 +279,7 @@ void main() {
     vocabularyRepository: vocabularyRepository,
     profileRepository: profileRepository,
     settingsRepository: settingsRepository,
+    chatSocketService: chatSocketService,
   ));
 }
 
@@ -308,6 +309,7 @@ class HubElApp extends StatelessWidget {
   final IVocabularyRepository? vocabularyRepository;
   final ProfileRepository? profileRepository;
   final SettingsRepository? settingsRepository;
+  final ChatSocketService? chatSocketService;
 
   const HubElApp({
     super.key,
@@ -336,6 +338,7 @@ class HubElApp extends StatelessWidget {
     this.vocabularyRepository,
     this.profileRepository,
     this.settingsRepository,
+    this.chatSocketService,
   });
 
   @override
@@ -363,6 +366,8 @@ class HubElApp extends StatelessWidget {
           RepositoryProvider<ProfileRepository>.value(value: profileRepository!),
         if (settingsRepository != null)
           RepositoryProvider<SettingsRepository>.value(value: settingsRepository!),
+        if (chatSocketService != null)
+          RepositoryProvider<ChatSocketService>.value(value: chatSocketService!),
       ],
       child: MultiBlocProvider(
         providers: [

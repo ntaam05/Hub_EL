@@ -47,6 +47,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthUserBannedReceived>(_onUserBannedReceived);
     on<AuthSessionExpiredReceived>(_onSessionExpiredReceived);
     on<AuthUserBalanceUpdated>(_onUserBalanceUpdated);
+    on<AuthUserProfileUpdated>(_onUserProfileUpdated);
     on<AuthUserRefreshed>(_onUserRefreshed);
   }
 
@@ -291,6 +292,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         premiumCoins: event.premiumCoins,
         stardust: event.stardust,
         isPro: event.isPro,
+      );
+      emit(Authenticated(user: updatedUser));
+    }
+  }
+
+  void _onUserProfileUpdated(
+    AuthUserProfileUpdated event,
+    Emitter<AuthState> emit,
+  ) {
+    if (state is Authenticated) {
+      final currentUser = (state as Authenticated).user;
+      final updatedUser = currentUser.copyWith(
+        name: event.name,
+        fullName: event.fullName,
+        username: event.username,
+        avatar: event.avatar,
+        image: event.image,
       );
       emit(Authenticated(user: updatedUser));
     }
