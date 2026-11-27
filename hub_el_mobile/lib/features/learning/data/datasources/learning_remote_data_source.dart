@@ -9,6 +9,7 @@ import '../models/quiz_result_model.dart';
 
 abstract class ILearningRemoteDataSource {
   Future<ApiResult<VideoSearchResultModel>> searchVideos(String query, {String? pageToken});
+  Future<({List<String> history, List<String> suggestions})> getSearchSuggestions(String query);
   Future<ApiResult<VideoItemModel>> checkVideoUrl(String url);
   Future<ApiResult<VideoDetailModel>> getVideoDetail(String videoId);
   Future<ApiResult<List<VideoItemModel>>> getRelatedVideos(String videoId);
@@ -21,7 +22,16 @@ abstract class ILearningRemoteDataSource {
     bool markCompleted = false,
   });
   Future<ApiResult<bool>> markVideoCompleted(String videoId);
-  Future<ApiResult<QuizGeneratedModel>> generateQuiz({required String videoId, int count = 5});
+  Future<ApiResult<QuizGeneratedModel>> generateQuiz({
+    required String videoId,
+    int count = 5,
+    String? mode,
+  });
+  Future<ApiResult<QuizQuestionModel>> generateNextQuestion({
+    required String videoId,
+    required int difficultyLevel,
+    List<String> previousQuestions = const [],
+  });
   Future<ApiResult<QuizResultModel>> submitQuiz({
     required String videoId,
     String? videoTitle,
@@ -48,6 +58,27 @@ class LearningRemoteDataSource implements ILearningRemoteDataSource {
       },
       fromJson: (json) => VideoSearchResultModel.fromJson(json as Map<String, dynamic>),
     );
+  }
+
+  @override
+  Future<({List<String> history, List<String> suggestions})> getSearchSuggestions(String query) async {
+    final res = await dioClient.get<Map<String, dynamic>>(
+      ApiEndpoints.videoSuggestions,
+      queryParameters: {'q': query},
+      fromJson: (json) => json as Map<String, dynamic>,
+    );
+    if (res is ApiSuccess<Map<String, dynamic>>) {
+      final rawHistory = res.data['history'];
+      final rawSuggestions = res.data['suggestions'];
+      final history = rawHistory is List
+          ? rawHistory.map((e) => e.toString()).toList()
+          : <String>[];
+      final suggestions = rawSuggestions is List
+          ? rawSuggestions.map((e) => e.toString()).toList()
+          : <String>[];
+      return (history: history, suggestions: suggestions);
+    }
+    return (history: <String>[], suggestions: <String>[]);
   }
 
   @override
@@ -130,15 +161,44 @@ class LearningRemoteDataSource implements ILearningRemoteDataSource {
   }
 
   @override
-  Future<ApiResult<QuizGeneratedModel>> generateQuiz({required String videoId, int count = 5}) async {
+  Future<ApiResult<QuizGeneratedModel>> generateQuiz({
+    required String videoId,
+    int count = 5,
+    String? mode,
+  }) async {
     return dioClient.post<QuizGeneratedModel>(
       ApiEndpoints.videoGenerateQuiz,
       data: {
         'videoId': videoId,
         'count': count,
+        'mode': ?mode,
       },
       options: Options(receiveTimeout: const Duration(seconds: 90)),
       fromJson: (json) => QuizGeneratedModel.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  @override
+  Future<ApiResult<QuizQuestionModel>> generateNextQuestion({
+    required String videoId,
+    required int difficultyLevel,
+    List<String> previousQuestions = const [],
+  }) async {
+    return dioClient.post<QuizQuestionModel>(
+      ApiEndpoints.videoNextQuiz,
+      data: {
+        'videoId': videoId,
+        'difficultyLevel': difficultyLevel,
+        'previousQuestions': previousQuestions,
+      },
+      options: Options(receiveTimeout: const Duration(seconds: 90)),
+      fromJson: (json) {
+        final map = json as Map<String, dynamic>;
+        final rawQ = map['question'] is Map<String, dynamic>
+            ? map['question'] as Map<String, dynamic>
+            : map;
+        return QuizQuestionModel.fromJson(rawQ);
+      },
     );
   }
 

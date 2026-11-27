@@ -54,6 +54,16 @@ class MockLearningRepository implements ILearningRepository {
   }
 
   @override
+  Future<({List<String> history, List<String> suggestions})> getSearchSuggestions(String query) async {
+    return (
+      history: ['lập trình flutter cơ bản'],
+      suggestions: query.trim().isEmpty
+          ? ['học python cơ bản']
+          : ['$query cơ bản', 'hướng dẫn $query'],
+    );
+  }
+
+  @override
   Future<ApiResult<VideoItemEntity>> checkVideoUrl(String url) async {
     if (shouldFail) {
       return const ApiFailure(message: 'Link không hợp lệ');
@@ -136,16 +146,18 @@ class MockLearningRepository implements ILearningRepository {
   Future<ApiResult<QuizGeneratedEntity>> generateQuiz({
     required String videoId,
     int count = 5,
+    String? mode,
   }) async {
     if (quizShouldFail) {
       return ApiFailure(message: quizFailMessage);
     }
+    final generatedCount = mode == 'adaptive' ? 1 : count;
     return ApiSuccess(
       QuizGeneratedEntity(
         videoId: videoId,
-        questionCount: count,
+        questionCount: generatedCount,
         questions: List.generate(
-          count,
+          generatedCount,
           (i) => QuizQuestionEntity(
             questionText: 'Câu hỏi mẫu số ${i + 1} về Flutter?',
             optionA: 'Lựa chọn A',
@@ -156,6 +168,28 @@ class MockLearningRepository implements ILearningRepository {
             explanation: 'Giải thích chi tiết cho câu hỏi ${i + 1}',
           ),
         ),
+      ),
+    );
+  }
+
+  @override
+  Future<ApiResult<QuizQuestionEntity>> generateNextQuestion({
+    required String videoId,
+    required int difficultyLevel,
+    List<String> previousQuestions = const [],
+  }) async {
+    if (quizShouldFail) {
+      return ApiFailure(message: quizFailMessage);
+    }
+    return ApiSuccess(
+      QuizQuestionEntity(
+        questionText: 'Câu hỏi tiếp theo (Mức $difficultyLevel)?',
+        optionA: 'Lựa chọn A',
+        optionB: 'Lựa chọn B',
+        optionC: 'Lựa chọn C',
+        optionD: 'Lựa chọn D',
+        correctAnswer: 'A',
+        explanation: 'Giải thích chi tiết mức $difficultyLevel',
       ),
     );
   }
@@ -498,7 +532,9 @@ void main() {
       expect(bloc.state, isA<QuizLoaded>());
       final loaded = bloc.state as QuizLoaded;
       expect(loaded.videoId, 'v123');
-      expect(loaded.questions.length, 3);
+      expect(loaded.questions.length, 1);
+      expect(loaded.totalCount, 3);
+      expect(loaded.difficultyLevel, 2);
       expect(loaded.userAnswers.isEmpty, true);
       expect(loaded.isSubmitted, false);
     });
@@ -531,27 +567,29 @@ void main() {
 
       expect(bloc.state, isA<QuizLoaded>());
 
-      // Chọn câu trả lời cho câu 0 là 'B'
+      // Chọn câu trả lời cho câu 0 là 'B' (khóa đáp án để hiện giải thích & độ khó thích ứng)
       bloc.add(const QuizAnswerSelected(questionIndex: 0, option: 'B'));
       await Future.delayed(const Duration(milliseconds: 20));
 
       var loaded = bloc.state as QuizLoaded;
       expect(loaded.userAnswers[0], 'B');
 
-      // Chọn tiếp câu 1 là 'C'
-      bloc.add(const QuizAnswerSelected(questionIndex: 1, option: 'C'));
+      // Chuyển sang câu tiếp theo (trả lời sai -> độ khó giảm từ 2 xuống 1)
+      bloc.add(const QuizNextQuestionRequested());
+      await Future.delayed(const Duration(milliseconds: 20));
+
+      loaded = bloc.state as QuizLoaded;
+      expect(loaded.currentIndex, 1);
+      expect(loaded.difficultyLevel, 1);
+      expect(loaded.questions.length, 2);
+
+      // Chọn tiếp câu 1 là 'A' (đúng -> độ khó câu sau tăng lên 2)
+      bloc.add(const QuizAnswerSelected(questionIndex: 1, option: 'A'));
       await Future.delayed(const Duration(milliseconds: 20));
 
       loaded = bloc.state as QuizLoaded;
       expect(loaded.userAnswers[0], 'B');
-      expect(loaded.userAnswers[1], 'C');
-
-      // Đổi đáp án câu 0 thành 'A'
-      bloc.add(const QuizAnswerSelected(questionIndex: 0, option: 'A'));
-      await Future.delayed(const Duration(milliseconds: 20));
-
-      loaded = bloc.state as QuizLoaded;
-      expect(loaded.userAnswers[0], 'A');
+      expect(loaded.userAnswers[1], 'A');
 
       // Reset
       bloc.add(const QuizResetRequested());
@@ -655,15 +693,27 @@ void main() {
         submitQuizUseCase: SubmitQuizUseCase(repo),
       );
 
-      // 1. Tạo 3 câu hỏi (mỗi câu đều có correctAnswer = 'A' theo mock)
+      // 1. Tạo đề 3 câu (sinh câu đầu tiên mức 2 - tương đối dễ)
       bloc.add(const GenerateQuizRequested(videoId: 'v101', count: 3));
       await Future.delayed(const Duration(milliseconds: 50));
 
-      // 2. Chọn câu 0 là 'A' (đúng), câu 1 là 'B' (sai), câu 2 là 'A' (đúng) -> 2/3 đúng
+      // 2. Câu 0 chọn 'A' (đúng -> câu 1 tăng lên mức 3)
       bloc.add(const QuizAnswerSelected(questionIndex: 0, option: 'A'));
+      await Future.delayed(const Duration(milliseconds: 20));
+      bloc.add(const QuizNextQuestionRequested());
+      await Future.delayed(const Duration(milliseconds: 20));
+      expect((bloc.state as QuizLoaded).difficultyLevel, 3);
+
+      // Câu 1 chọn 'B' (sai -> câu 2 giảm về mức 2)
       bloc.add(const QuizAnswerSelected(questionIndex: 1, option: 'B'));
+      await Future.delayed(const Duration(milliseconds: 20));
+      bloc.add(const QuizNextQuestionRequested());
+      await Future.delayed(const Duration(milliseconds: 20));
+      expect((bloc.state as QuizLoaded).difficultyLevel, 2);
+
+      // Câu 2 chọn 'A' (đúng) -> tổng 2/3 đúng
       bloc.add(const QuizAnswerSelected(questionIndex: 2, option: 'A'));
-      await Future.delayed(const Duration(milliseconds: 50));
+      await Future.delayed(const Duration(milliseconds: 20));
 
       final preSubmit = bloc.state as QuizLoaded;
       expect(preSubmit.calculatedCorrectCount, 2);

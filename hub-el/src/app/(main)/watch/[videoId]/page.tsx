@@ -9,6 +9,7 @@ import {
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import ShareVideoModal from '@/components/modals/ShareVideoModal';
+import { AdaptiveVideoQuiz } from '@/components/quiz/AdaptiveVideoQuiz';
 
 import { generateQuizFromVideoAction } from '@/actions/quiz/ai';
 import { saveQuizAttemptAction } from '@/actions/quiz/attempt';
@@ -359,9 +360,10 @@ export default function StudyRoomPage() {
 
     setIsGenerating(true); setUserAnswers({}); setHasSubmitted(false); setShowAiError(false);
     try {
-      const res = await generateQuizFromVideoAction(userId, video.videoId, questionCount);
+      const res = await generateQuizFromVideoAction(userId, video.videoId, questionCount, true);
       if (res.success && res.data) {
-        setQuizzes(Array.isArray(res.data) ? res.data : res.data.questions);
+        const initialList = Array.isArray(res.data) ? res.data : res.data.questions;
+        setQuizzes(initialList);
         window.dispatchEvent(new CustomEvent('updateUserStats', { detail: { energyCost: currentEnergyCost } }));
         updateTaskProgressAction(userId, "SPEND_ENERGY", currentEnergyCost);
       }
@@ -545,61 +547,20 @@ export default function StudyRoomPage() {
             {showAiError && <p className="text-red-500 text-sm mt-4 p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-lg flex items-center gap-2"><AlertTriangle className="w-5 h-5"/> AI đang bị quá tải hoặc cấu trúc trả về bị lỗi. Xin vui lòng thử lại!</p>}
           </div>
           
-          {quizzes && (
-            <div className="bg-white/50 dark:bg-[#121212] rounded-2xl p-6 md:p-8 shadow-sm">
-              <h3 className="text-xl font-bold mb-6 border-b pb-4 flex items-center gap-2 text-slate-900 dark:text-white">
-                <Zap className="w-6 h-6 text-yellow-500" /> Bài Tập AI Sinh Ra ({quizzes.length} câu)
-              </h3>
-              
-              <div className="space-y-6">
-                {quizzes.map((q: any, index: number) => {
-                  const isUserCorrect = userAnswers[index] === q.correctAnswer;
-                  return (
-                    <div key={index} className="p-5 md:p-6 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1a21]">
-                      <p className="font-bold text-base md:text-lg mb-4 text-slate-800 dark:text-slate-200">
-                        Câu {index + 1}: {q.questionText}
-                      </p>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                        {['A', 'B', 'C', 'D'].map(opt => {
-                          const isSelected = userAnswers[index] === opt;
-                          const isCorrectOpt = q.correctAnswer === opt;
-                          let btnStyle = "bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700 dark:text-slate-300 dark:bg-[#23232b] dark:border-slate-700/50 dark:hover:bg-[#2a2a35]";
-                          
-                          if (hasSubmitted) {
-                            if (isCorrectOpt) btnStyle = "bg-green-100 dark:bg-green-500/20 border-green-500 text-green-800 dark:text-green-400 font-bold";
-                            else if (isSelected && !isCorrectOpt) btnStyle = "bg-red-100 dark:bg-red-500/20 border-red-500 text-red-800 dark:text-red-400 font-bold";
-                            else btnStyle = "opacity-50 bg-slate-50 dark:bg-[#23232b] border-slate-200 dark:border-slate-700/50 text-slate-700 dark:text-slate-500"; 
-                          } else if (isSelected) btnStyle = "bg-blue-50 dark:bg-blue-500/20 border-blue-500 text-blue-800 dark:text-blue-400 font-bold shadow-sm";
-
-                          return (
-                            <button key={opt} onClick={() => !hasSubmitted && setUserAnswers({ ...userAnswers, [index]: opt })} disabled={hasSubmitted} className={`p-4 rounded-xl border text-left flex justify-between items-center transition-all ${btnStyle}`}>
-                              <span><span className="font-bold mr-1 opacity-80">{opt}.</span> {q[`option${opt}`]}</span>
-                              {hasSubmitted && isCorrectOpt && <CheckCircle className="w-5 h-5 shrink-0" />}
-                              {hasSubmitted && isSelected && !isCorrectOpt && <XCircle className="w-5 h-5 shrink-0" />}
-                            </button>
-                          );
-                        })}
-                      </div>
-                      
-                      {hasSubmitted && (
-                        <div className={`mt-5 p-4 rounded-xl text-sm border ${isUserCorrect ? 'bg-green-50 dark:bg-green-500/10 border-green-200 dark:border-green-500/30 text-green-700 dark:text-green-400' : 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30 text-red-700 dark:text-red-400'}`}>
-                          <p className="font-bold mb-2 flex items-center gap-2">{isUserCorrect ? <><CheckCircle className="w-4 h-4"/> Chính xác!</> : <><XCircle className="w-4 h-4"/> Sai rồi!</>}</p>
-                          <p className="text-slate-600 dark:text-slate-300 leading-relaxed"><span className="font-bold opacity-80">Giải thích:</span> {q.explanation}</p>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              {!hasSubmitted && Object.keys(userAnswers).length > 0 && (
-                  <div className="mt-8 flex justify-end border-t pt-6">
-                     <button onClick={handleSubmitQuiz} disabled={isSubmitting} className="px-8 py-3.5 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 flex items-center gap-2">
-                        {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle className="w-5 h-5"/>} {isSubmitting ? 'Đang chấm...' : 'Nộp bài & Chấm điểm'}
-                     </button>
-                  </div>
-              )}
-            </div>
+          {quizzes && userId && (
+            <AdaptiveVideoQuiz
+              videoId={video.videoId}
+              userId={userId}
+              totalCount={questionCount}
+              questions={quizzes}
+              onQuestionsChange={setQuizzes}
+              userAnswers={userAnswers}
+              onUserAnswersChange={setUserAnswers}
+              hasSubmitted={hasSubmitted}
+              isSubmitting={isSubmitting}
+              onSubmitQuiz={handleSubmitQuiz}
+              onError={(msg) => showNotification(msg, "error")}
+            />
           )}
         </div>
 

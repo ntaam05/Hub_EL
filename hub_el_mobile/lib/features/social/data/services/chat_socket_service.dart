@@ -109,10 +109,26 @@ class ChatSocketService {
     });
   }
 
+  /// Đăng ký hàm lắng nghe thông báo tài khoản bị đăng nhập ở nơi khác
+  void onSessionKicked(void Function(Map<String, dynamic> data) onKicked) {
+    _socket?.off('session_kicked');
+    _socket?.on('session_kicked', (data) {
+      debugPrint('⚠️ [Socket.IO] Nhận thông báo đăng nhập nơi khác: $data');
+      if (data is Map<String, dynamic>) {
+        onKicked(data);
+      } else if (data is Map) {
+        onKicked(Map<String, dynamic>.from(data));
+      } else {
+        onKicked({});
+      }
+    });
+  }
+
   /// Ngắt kết nối socket
   void disconnect() {
     _socket?.off('receive_message');
     _socket?.off('profile_updated');
+    _socket?.off('session_kicked');
     _socket?.disconnect();
     _socket?.dispose();
     _socket = null;

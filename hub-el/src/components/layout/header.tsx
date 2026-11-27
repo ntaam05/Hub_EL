@@ -9,14 +9,14 @@ import { getFreshUserStatsAction } from '@/actions/user/learning';
 import { 
   Search, Flame, Coins, ShoppingCart, Link as LinkIcon, Zap, Gem, 
   BarChart2, Settings, LogOut, X, Snowflake, Play, Menu, Bell, 
-  BrainCircuit, BookMarked, Award, CornerDownLeft, Loader2, AlertCircle, CheckCircle2
+  BrainCircuit, BookMarked, Award, CornerDownLeft, Loader2, AlertCircle, CheckCircle2, History
 } from 'lucide-react'; // 🚨 Đã import thêm AlertCircle và CheckCircle2
 
 import { ThemeTogglePill } from "./theme-toggle";
 import { StatsModal } from "../modals/stats-modal";
 import { cn } from "@/lib/utils";
 
-import { checkEducationalVideoAction, validateSearchQueryAction } from '@/actions/video/video';
+import { checkEducationalVideoAction, getSearchSuggestionsAction, validateSearchQueryAction } from '@/actions/video/video';
 
 const HubElLogo = ({ className }: { className?: string }) => (
   <div className={cn("bg-blue-600 dark:bg-blue-500 transition-colors duration-500", className)}
@@ -138,6 +138,10 @@ export function Header() {
   }, [user?.lastStudyDate, user?.currentStreak]);
 
   const [keyword, setKeyword] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [searchHistoryList, setSearchHistoryList] = useState<string[]>([]);
+  const [searchSuggestionsList, setSearchSuggestionsList] = useState<string[]>([]);
+  const desktopSearchRef = useRef<HTMLDivElement>(null);
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [ytLink, setYtLink] = useState('');
   const [isCheckingLink, setIsCheckingLink] = useState(false);
@@ -145,18 +149,49 @@ export function Header() {
   const [showWikiMenu, setShowWikiMenu] = useState(false); 
   const wikiMenuRef = useRef<HTMLDivElement>(null); 
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (desktopSearchRef.current && !desktopSearchRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (!showSuggestions && !isMobileSearchOpen) return;
+    let active = true;
+    const timer = setTimeout(async () => {
+      const res = await getSearchSuggestionsAction(session?.user?.id as string | undefined, keyword);
+      if (active && res.success) {
+        setSearchHistoryList(res.history || []);
+        setSearchSuggestionsList(res.suggestions || []);
+      }
+    }, keyword.trim() ? 200 : 0);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [keyword, showSuggestions, isMobileSearchOpen, session?.user?.id]);
+
+  const executeSearch = async (term: string) => {
+    const trimmed = term.trim();
+    if (!trimmed) return;
+    setKeyword(trimmed);
+    setShowSuggestions(false);
+    const checkRes = await validateSearchQueryAction(trimmed, session?.user?.id);
+    if (!checkRes.isValid) {
+      showNotification(checkRes.reason || "Từ khóa tìm kiếm không hợp lệ!", 'error', 'TÌM KIẾM BỊ TỪ CHỐI!');
+      return;
+    }
+    router.push(`/explore?q=${encodeURIComponent(trimmed)}`);
+    setIsMobileSearchOpen(false);
+  };
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (keyword.trim()) {
-      const checkRes = await validateSearchQueryAction(keyword, session?.user?.id);
-      if (!checkRes.isValid) {
-        // 🚨 ĐÃ THAY ALERT BẰNG THÔNG BÁO CUSTOM
-        showNotification(checkRes.reason || "Từ khóa tìm kiếm không hợp lệ!", 'error', 'TÌM KIẾM BỊ TỪ CHỐI!');
-  return; 
-      }
-      router.push(`/explore?q=${encodeURIComponent(keyword)}`);
-      setIsMobileSearchOpen(false);
-    }
+    await executeSearch(keyword);
   };
 
   const handlePlayLink = async (e: React.FormEvent) => {
@@ -291,11 +326,38 @@ export function Header() {
                 
                 <form onSubmit={handleSearch} className="flex-1 relative">
                   <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input autoFocus type="text" value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="Tìm kiếm khóa học..." className="w-full pl-11 pr-12 py-2.5 bg-slate-100 dark:bg-slate-800/50 border border-transparent dark:border-slate-700/50 rounded-full text-sm outline-none text-slate-900 dark:text-white placeholder:text-slate-400" />
+                  <input autoFocus type="text" value={keyword} onFocus={() => setShowSuggestions(true)} onChange={(e) => { setKeyword(e.target.value); setShowSuggestions(true); }} placeholder="Tìm kiếm khóa học..." className="w-full pl-11 pr-12 py-2.5 bg-slate-100 dark:bg-slate-800/50 border border-transparent dark:border-slate-700/50 rounded-full text-sm outline-none text-slate-900 dark:text-white placeholder:text-slate-400" />
                   
                   <button type="submit" className="absolute right-1.5 top-1/2 -translate-y-1/2 p-2 bg-blue-600 text-white rounded-full active:scale-95 shadow-sm hover:bg-blue-700 transition-colors">
                     <CornerDownLeft className="w-3.5 h-3.5" />
                   </button>
+
+                  {(searchHistoryList.length > 0 || searchSuggestionsList.length > 0) && (
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-[#1e293b] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 py-2 z-[60] max-h-72 overflow-y-auto">
+                      {searchHistoryList.map((item, idx) => (
+                        <button
+                          key={`m-hist-${idx}`}
+                          type="button"
+                          onClick={() => executeSearch(item)}
+                          className="w-full px-4 py-2.5 flex items-center gap-3 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 transition-colors"
+                        >
+                          <History className="w-4 h-4 text-slate-400 shrink-0" />
+                          <span className="truncate font-medium">{item}</span>
+                        </button>
+                      ))}
+                      {searchSuggestionsList.map((item, idx) => (
+                        <button
+                          key={`m-sug-${idx}`}
+                          type="button"
+                          onClick={() => executeSearch(item)}
+                          className="w-full px-4 py-2.5 flex items-center gap-3 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors"
+                        >
+                          <Search className="w-4 h-4 text-blue-500 shrink-0" />
+                          <span className="truncate">{item}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </form>
 
                 <button type="button" onClick={() => setIsMobileSearchOpen(false)} className="p-2 rounded-full bg-slate-100 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 active:scale-95 shrink-0"><X className="w-5 h-5" /></button>
@@ -323,10 +385,57 @@ export function Header() {
               </button>
             </div>
 
-            <div className="flex-1 hidden lg:flex items-center justify-center gap-3 px-4 max-w-2xl">
+            <div className="flex-1 hidden lg:flex items-center justify-center gap-3 px-4 max-w-2xl" ref={desktopSearchRef}>
               <form onSubmit={handleSearch} className="w-full relative group">
-                <input type="text" placeholder="Tìm kiếm khóa học..." value={keyword} onChange={(e) => setKeyword(e.target.value)} className="w-full pl-11 pr-4 py-2.5 bg-slate-100 dark:bg-slate-800/50 border border-transparent dark:border-slate-700/50 rounded-full text-sm outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500" />
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm khóa học..."
+                  value={keyword}
+                  onFocus={() => setShowSuggestions(true)}
+                  onChange={(e) => {
+                    setKeyword(e.target.value);
+                    setShowSuggestions(true);
+                  }}
+                  className="w-full pl-11 pr-4 py-2.5 bg-slate-100 dark:bg-slate-800/50 border border-transparent dark:border-slate-700/50 rounded-full text-sm outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                />
                 <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500" />
+
+                {showSuggestions && (searchHistoryList.length > 0 || searchSuggestionsList.length > 0) && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-[#1e293b] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 py-2 z-50 max-h-80 overflow-y-auto animate-in fade-in slide-in-from-top-1">
+                    {searchHistoryList.length > 0 && (
+                      <div className="px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                        Tìm kiếm gần đây
+                      </div>
+                    )}
+                    {searchHistoryList.map((item, idx) => (
+                      <button
+                        key={`d-hist-${idx}`}
+                        type="button"
+                        onClick={() => executeSearch(item)}
+                        className="w-full px-4 py-2.5 flex items-center gap-3 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 transition-colors"
+                      >
+                        <History className="w-4 h-4 text-slate-400 shrink-0" />
+                        <span className="truncate font-medium">{item}</span>
+                      </button>
+                    ))}
+                    {searchSuggestionsList.length > 0 && (
+                      <div className="px-4 pt-2 pb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400 border-t border-slate-100 dark:border-slate-800 mt-1">
+                        Gợi ý cho bạn
+                      </div>
+                    )}
+                    {searchSuggestionsList.map((item, idx) => (
+                      <button
+                        key={`d-sug-${idx}`}
+                        type="button"
+                        onClick={() => executeSearch(item)}
+                        className="w-full px-4 py-2.5 flex items-center gap-3 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors"
+                      >
+                        <Search className="w-4 h-4 text-blue-500 shrink-0" />
+                        <span className="truncate">{item}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </form>
 
               <div className="relative" ref={linkPopupRef}>

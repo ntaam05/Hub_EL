@@ -75,7 +75,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         const dbUser = await prisma.user.findUnique({
           where: { email: user.email },
-          select: { role: true } 
+          select: { id: true, role: true } 
         });
 
         if (dbUser?.role === "banned" || dbUser?.role === "BANNED") {
@@ -83,6 +83,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           
           // Mẹo: Nếu đăng nhập bằng Google/Github mà bị ban, nó sẽ đá văng ra trang chủ kèm param lỗi
           return "/?error=banned"; 
+        }
+
+        if (dbUser?.id && (global as any).__socketIo) {
+          (global as any).__socketIo.to(dbUser.id).emit("session_kicked", {
+            source: "web",
+            message: "Tài khoản của bạn vừa được đăng nhập trên Web. Vui lòng xác nhận để đăng xuất.",
+          });
         }
 
         return true; 
@@ -96,7 +103,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         token.id = user.id;
         token.name = user.name;
-        token.image = user.image;
+        // Không lưu base64 data URI vào JWT cookie để tránh lỗi HTTP 431 (Request Header Fields Too Large)
+        token.image = user.image && !user.image.startsWith("data:") ? user.image : null;
         
         const u = user as any; 
         token.freeCoins = u.freeCoins ?? 0;
@@ -114,8 +122,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       
       if (trigger === "update" && session) {
         if (session.name) token.name = session.name;
-        if (session.image) token.image = session.image;
-        return { ...token, ...session };
+        if (session.image && typeof session.image === "string" && !session.image.startsWith("data:")) {
+          token.image = session.image;
+        }
+        const { image: _ignoredImg, ...restSession } = session;
+        return { ...token, ...restSession, image: token.image };
       }
       return token;
     },

@@ -282,3 +282,131 @@ export async function getRecommendedDashboardVideosAction(userId: string) {
     return { success: false, error: error.message };
   }
 }
+
+// ==========================================
+// GỢI Ý TÌM KIẾM KIỂU YOUTUBE (LỊCH SỬ + DỰ ĐOÁN)
+// ==========================================
+export async function getSearchSuggestionsAction(userId?: string, query: string = "") {
+  try {
+    const cleanQuery = query.trim().toLowerCase();
+    let history: string[] = [];
+
+    if (userId) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { searchHistory: true },
+      });
+      if (user?.searchHistory) {
+        try {
+          const parsed = JSON.parse(user.searchHistory);
+          if (Array.isArray(parsed)) {
+            history = parsed.map((item) => String(item).trim()).filter(Boolean);
+          }
+        } catch {}
+      }
+    }
+
+    // Nếu chưa gõ gì: trả về lịch sử tìm kiếm gần nhất + một số chủ đề học tập phổ biến
+    if (!cleanQuery) {
+      const defaultTopics = [
+        "lập trình flutter cơ bản",
+        "học tiếng anh giao tiếp",
+        "hướng dẫn python cho người mới",
+        "toán cao cấp đại học",
+        "khóa học react nextjs",
+      ].filter((t) => !history.includes(t));
+
+      return {
+        success: true,
+        history: history.slice(0, 8),
+        suggestions: history.length < 5 ? defaultTopics.slice(0, 5 - history.length) : [],
+      };
+    }
+
+    // Lọc lịch sử khớp với từ khóa đang gõ
+    const matchedHistory = history
+      .filter((item) => item.toLowerCase().includes(cleanQuery))
+      .slice(0, 4);
+
+    // Lấy danh sách từ khóa giáo dục (whitelist) & từ khóa cấm (blacklist)
+    const { blacklist, whitelist } = await getActiveKeywords();
+    const isEducationalSuggestion = (text: string) => {
+      const lower = text.toLowerCase();
+      if (blacklist.some((b) => lower.includes(b))) return false;
+      return whitelist.some((w) => lower.includes(w));
+    };
+
+    // Nếu từ khóa đang gõ chứa nội dung giải trí/cấm -> không gợi ý gì thêm
+    if (blacklist.some((b) => cleanQuery.includes(b))) {
+      return {
+        success: true,
+        history: matchedHistory,
+        suggestions: [],
+      };
+    }
+
+    const suggestionSet = new Set<string>();
+
+    // 1. Gọi YouTube Autocomplete API (chỉ giữ lại gợi ý thuộc chủ đề học tập)
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 1500);
+      const ytSuggestUrl = `https://suggestqueries.google.com/complete/search?client=firefox&ds=yt&hl=vi&q=${encodeURIComponent(cleanQuery)}`;
+      const res = await fetch(ytSuggestUrl, { signal: controller.signal });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const json = await res.json();
+        if (Array.isArray(json) && Array.isArray(json[1])) {
+          for (const item of json[1]) {
+            const term = String(item).trim();
+            if (
+              term &&
+              term.toLowerCase() !== cleanQuery &&
+              isEducationalSuggestion(term) &&
+              !matchedHistory.some((h) => h.toLowerCase() === term.toLowerCase())
+            ) {
+              suggestionSet.add(term);
+              if (suggestionSet.size >= 8) break;
+            }
+          }
+        }
+      }
+    } catch {
+      // Fallback bên dưới nếu không gọi được YouTube Suggest
+    }
+
+    // 2. Bổ sung gợi ý học tập thông minh nếu kết quả còn ít
+    if (suggestionSet.size < 5) {
+      const eduTemplates = [
+        `${cleanQuery} cơ bản`,
+        `hướng dẫn ${cleanQuery}`,
+        `học ${cleanQuery} từ đầu`,
+        `${cleanQuery} nâng cao`,
+        `bài giảng ${cleanQuery}`,
+      ];
+      for (const tpl of eduTemplates) {
+        if (
+          !matchedHistory.some((h) => h.toLowerCase() === tpl.toLowerCase()) &&
+          isEducationalSuggestion(tpl)
+        ) {
+          suggestionSet.add(tpl);
+        }
+        if (suggestionSet.size >= 8) break;
+      }
+    }
+
+    return {
+      success: true,
+      history: matchedHistory,
+      suggestions: Array.from(suggestionSet).slice(0, 8),
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      history: [],
+      suggestions: [],
+      error: error.message,
+    };
+  }
+}

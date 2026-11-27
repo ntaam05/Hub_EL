@@ -1,4 +1,9 @@
-export async function generateQuizService(context: string, count: number, difficulty: string) {
+export async function generateQuizService(
+  context: string,
+  count: number,
+  difficulty: string,
+  previousQuestions: string[] = []
+) {
   const apiKeys = (process.env.GEMINI_API_KEYS || "")
     .split(",")
     .map(key => key.trim())
@@ -8,12 +13,23 @@ export async function generateQuizService(context: string, count: number, diffic
   const maxRetries = apiKeys.length > 0 ? apiKeys.length : 1; 
   let attempt = 0;
 
+  const avoidDuplicateBlock =
+    previousQuestions.length > 0
+      ? `\n🚫 KHÔNG TRÙNG LẶP:\n- Tuyệt đối không tạo câu hỏi trùng ý hoặc lặp lại nội dung với các câu hỏi đã tạo trước đó:\n${previousQuestions
+          .map((q, idx) => `  ${idx + 1}. ${q}`)
+          .join("\n")}\n`
+      : "";
+
   // THIẾT KẾ PROMPT TỔNG LỰC: PHÂN LOẠI VÀ ÁP DẠNG BÀI TẬP ĐẶC THÙ
   const prompt = `Bạn là một Chuyên gia ra đề thi chuyên nghiệp. 
 Dựa vào nội dung bài học sau: [${context}]
 
 🎯 NHIỆM VỤ: 
 Tạo đúng ${count} câu hỏi trắc nghiệm. Bạn được phép sáng tạo tình huống/ví dụ mới nhưng PHẢI bám sát chủ đề và kiến thức trong video.
+
+📊 MỨC ĐỘ ĐỘ KHÓ YÊU CẦU: ${difficulty}
+- Hãy điều chỉnh độ sâu kiến thức, mức độ suy luận và độ nhiễu của các đáp án đúng theo mức độ yêu cầu trên.
+${avoidDuplicateBlock}
 
 🛑 QUY TẮC RIÊNG CHO TỪNG MÔN HỌC:
 

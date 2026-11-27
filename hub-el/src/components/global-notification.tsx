@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
 import { usePathname, useRouter } from 'next/navigation';
 import { io, Socket } from 'socket.io-client';
-import { X } from 'lucide-react';
+import { AlertTriangle, X } from 'lucide-react';
 
 interface ToastNotif {
   id: string;
@@ -21,6 +21,7 @@ export function GlobalNotification() {
   const pathname = usePathname();
   const router = useRouter();
   const [toasts, setToasts] = useState<ToastNotif[]>([]);
+  const [kickedMessage, setKickedMessage] = useState<string | null>(null);
   const currentUserId = session?.user?.id;
 
   useEffect(() => {
@@ -64,6 +65,13 @@ export function GlobalNotification() {
       setTimeout(() => removeToast(newToast.id), 6000); // Tự động ẩn sau 6s
     });
 
+    // 3. Lắng nghe thông báo TÀI KHOẢN ĐĂNG NHẬP NƠI KHÁC
+    socketIo.on("session_kicked", (data: any) => {
+      setKickedMessage(
+        data?.message || "Tài khoản của bạn vừa được đăng nhập ở thiết bị khác. Vui lòng xác nhận để đăng xuất."
+      );
+    });
+
     return () => { socketIo.disconnect(); };
   }, [currentUserId, pathname]);
 
@@ -72,7 +80,31 @@ export function GlobalNotification() {
   };
 
   return (
-    <div className="fixed bottom-4 right-4 z-[9999] flex flex-col gap-3 pointer-events-none">
+    <>
+      {kickedMessage && (
+        <div className="fixed inset-0 z-[10000] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 animate-in zoom-in-95 fade-in duration-200">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-amber-500/15 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5 text-amber-500" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                Tài khoản đăng nhập nơi khác
+              </h3>
+            </div>
+            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-6">
+              {kickedMessage}
+            </p>
+            <button
+              onClick={() => signOut({ callbackUrl: '/login' })}
+              className="w-full py-2.5 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold text-sm transition-colors cursor-pointer"
+            >
+              Xác nhận
+            </button>
+          </div>
+        </div>
+      )}
+      <div className="fixed bottom-4 right-4 z-[9999] flex flex-col gap-3 pointer-events-none">
       {toasts.map(t => (
         <div 
            key={t.id} 
@@ -95,6 +127,7 @@ export function GlobalNotification() {
             </button>
         </div>
       ))}
-    </div>
+      </div>
+    </>
   );
 }

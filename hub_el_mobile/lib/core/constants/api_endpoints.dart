@@ -26,9 +26,11 @@ abstract class ApiEndpoints {
   // 3. VIDEO LEARNING & AI QUIZ
   // ==========================================
   static const String videoSearch = '/api/v1/videos/search';
+  static const String videoSuggestions = '/api/v1/videos/suggestions';
   static const String videoCheck = '/api/v1/videos/check';
   static const String videoValidateLink = '/api/v1/videos/check';
   static const String videoGenerateQuiz = '/api/v1/videos/quiz/generate';
+  static const String videoNextQuiz = '/api/v1/videos/quiz/next';
   static const String videoProgress = '/api/v1/videos/progress';
   static const String videoProgressSync = '/api/v1/videos/progress/sync';
   static const String videoProgressComplete = '/api/v1/videos/progress/complete';

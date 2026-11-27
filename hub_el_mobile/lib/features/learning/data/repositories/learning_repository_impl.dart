@@ -17,6 +17,11 @@ class LearningRepositoryImpl implements ILearningRepository {
   }
 
   @override
+  Future<({List<String> history, List<String> suggestions})> getSearchSuggestions(String query) {
+    return remoteDataSource.getSearchSuggestions(query);
+  }
+
+  @override
   Future<ApiResult<VideoItemEntity>> checkVideoUrl(String url) {
     return remoteDataSource.checkVideoUrl(url);
   }
@@ -59,8 +64,25 @@ class LearningRepositoryImpl implements ILearningRepository {
   }
 
   @override
-  Future<ApiResult<QuizGeneratedEntity>> generateQuiz({required String videoId, int count = 5}) {
-    return remoteDataSource.generateQuiz(videoId: videoId, count: count);
+  Future<ApiResult<QuizGeneratedEntity>> generateQuiz({
+    required String videoId,
+    int count = 5,
+    String? mode,
+  }) {
+    return remoteDataSource.generateQuiz(videoId: videoId, count: count, mode: mode);
+  }
+
+  @override
+  Future<ApiResult<QuizQuestionEntity>> generateNextQuestion({
+    required String videoId,
+    required int difficultyLevel,
+    List<String> previousQuestions = const [],
+  }) {
+    return remoteDataSource.generateNextQuestion(
+      videoId: videoId,
+      difficultyLevel: difficultyLevel,
+      previousQuestions: previousQuestions,
+    );
   }
 
   @override

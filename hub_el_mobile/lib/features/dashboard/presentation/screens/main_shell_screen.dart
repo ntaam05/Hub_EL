@@ -30,6 +30,7 @@ class MainShellScreen extends StatefulWidget {
 
 class _MainShellScreenState extends State<MainShellScreen> with WidgetsBindingObserver {
   int _currentTab = 0;
+  bool _isSessionKickedDialogShowing = false;
 
   @override
   void initState() {
@@ -38,12 +39,12 @@ class _MainShellScreenState extends State<MainShellScreen> with WidgetsBindingOb
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<StoreCubit>().loadCatalog(showLoading: false);
-        _initRealtimeProfileSync();
+        _initRealtimeSync();
       }
     });
   }
 
-  Future<void> _initRealtimeProfileSync() async {
+  Future<void> _initRealtimeSync() async {
     try {
       final socketService = context.read<ChatSocketService>();
       await socketService.connect(widget.user.id);
@@ -56,6 +57,30 @@ class _MainShellScreenState extends State<MainShellScreen> with WidgetsBindingOb
           avatar: data['avatar'] as String?,
           image: data['image'] as String?,
         ));
+      });
+      socketService.onSessionKicked((data) {
+        if (!mounted || _isSessionKickedDialogShowing) return;
+        _isSessionKickedDialogShowing = true;
+        final message = data['message']?.toString() ??
+            'Tài khoản của bạn vừa được đăng nhập ở thiết bị khác. Vui lòng xác nhận để đăng xuất.';
+        showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Tài khoản đăng nhập nơi khác'),
+            content: Text(message),
+            actions: [
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(ctx).pop();
+                  socketService.disconnect();
+                  context.read<AuthBloc>().add(const AuthLogoutRequested());
+                },
+                child: const Text('Xác nhận'),
+              ),
+            ],
+          ),
+        );
       });
     } catch (_) {
       // Bỏ qua nếu môi trường test không cung cấp ChatSocketService / AuthBloc

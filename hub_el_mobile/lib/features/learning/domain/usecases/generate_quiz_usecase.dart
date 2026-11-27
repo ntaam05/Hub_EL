@@ -10,8 +10,27 @@ class GenerateQuizUseCase {
   Future<ApiResult<QuizGeneratedEntity>> call({
     required String videoId,
     int count = 5,
+    String? mode,
   }) {
-    return repository.generateQuiz(videoId: videoId, count: count);
+    return repository.generateQuiz(videoId: videoId, count: count, mode: mode);
+  }
+}
+
+class GenerateNextQuestionUseCase {
+  final ILearningRepository repository;
+
+  GenerateNextQuestionUseCase(this.repository);
+
+  Future<ApiResult<QuizQuestionEntity>> call({
+    required String videoId,
+    required int difficultyLevel,
+    List<String> previousQuestions = const [],
+  }) {
+    return repository.generateNextQuestion(
+      videoId: videoId,
+      difficultyLevel: difficultyLevel,
+      previousQuestions: previousQuestions,
+    );
   }
 }
 

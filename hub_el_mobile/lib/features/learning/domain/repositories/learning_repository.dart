@@ -6,6 +6,7 @@ import '../entities/quiz_result_entity.dart';
 
 abstract class ILearningRepository {
   Future<ApiResult<VideoSearchResultEntity>> searchVideos(String query, {String? pageToken});
+  Future<({List<String> history, List<String> suggestions})> getSearchSuggestions(String query);
   Future<ApiResult<VideoItemEntity>> checkVideoUrl(String url);
   Future<ApiResult<VideoDetailEntity>> getVideoDetail(String videoId);
   Future<ApiResult<List<VideoItemEntity>>> getRelatedVideos(String videoId);
@@ -18,7 +19,16 @@ abstract class ILearningRepository {
     bool markCompleted = false,
   });
   Future<ApiResult<bool>> markVideoCompleted(String videoId);
-  Future<ApiResult<QuizGeneratedEntity>> generateQuiz({required String videoId, int count = 5});
+  Future<ApiResult<QuizGeneratedEntity>> generateQuiz({
+    required String videoId,
+    int count = 5,
+    String? mode,
+  });
+  Future<ApiResult<QuizQuestionEntity>> generateNextQuestion({
+    required String videoId,
+    required int difficultyLevel,
+    List<String> previousQuestions = const [],
+  });
   Future<ApiResult<QuizResultEntity>> submitQuiz({
     required String videoId,
     String? videoTitle,

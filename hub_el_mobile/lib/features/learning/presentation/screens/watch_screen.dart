@@ -243,10 +243,19 @@ class _WatchScreenState extends State<WatchScreen> {
                     if (quizState is QuizLoaded) {
                       return GeneratedQuizView(
                         questions: quizState.questions,
+                        totalCount: quizState.totalCount,
+                        currentIndex: quizState.currentIndex,
+                        difficultyLevel: quizState.difficultyLevel,
+                        questionDifficulties: quizState.questionDifficulties,
+                        isLoadingNext: quizState.isLoadingNext,
+                        nextQuestionError: quizState.nextQuestionError,
                         userAnswers: quizState.userAnswers,
                         isSubmitted: quizState.isSubmitted,
                         isSubmitting: quizState.isSubmitting,
                         result: quizState.result,
+                        onNextQuestion: () {
+                          context.read<QuizBloc>().add(const QuizNextQuestionRequested());
+                        },
                         onSubmit: () {
                           context.read<QuizBloc>().add(
                                 QuizSubmitRequested(

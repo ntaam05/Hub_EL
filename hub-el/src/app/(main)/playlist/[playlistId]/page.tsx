@@ -12,6 +12,7 @@ import {
 // SERVER ACTIONS
 import { toggleFavoriteVideoAction, toggleFavoritePlaylistAction } from '@/actions/user/favorites';
 import ShareVideoModal from '@/components/modals/ShareVideoModal';
+import { AdaptiveVideoQuiz } from '@/components/quiz/AdaptiveVideoQuiz';
 import { getPlaylistItemsAction, checkEducationalVideoAction } from '@/actions/video/video'; 
 import { generateQuizFromVideoAction } from '@/actions/quiz/ai';
 import { saveQuizAttemptAction } from '@/actions/quiz/attempt';
@@ -386,7 +387,7 @@ export default function PlaylistPage() {
     
     setIsGenerating(true); setUserAnswers({}); setHasSubmitted(false); setShowAiError(false);
     try {
-      const res = await generateQuizFromVideoAction(session.user.id as string, currentVideo.videoId, questionCount);
+      const res = await generateQuizFromVideoAction(session.user.id as string, currentVideo.videoId, questionCount, true);
       if (res.success && res.data) {
           const data = res.data;
           const finalQuizzes = Array.isArray(data) ? data : (data.questions || []);
@@ -674,71 +675,20 @@ export default function PlaylistPage() {
                 </div>
               )}
 
-              {quizzes && Array.isArray(quizzes) && quizzes.length > 0 && (
-                  <div className="bg-white/50 dark:bg-[#121212] p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                      <h3 className="font-bold text-xl mb-6 flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-4 text-slate-900 dark:text-white">
-                        <Zap className="w-6 h-6 text-yellow-500"/> Bài Tập AI Sinh Ra ({quizzes.length} câu)
-                      </h3>
-
-                      <div className="space-y-6">
-                        {quizzes.map((q: any, i: number) => (
-                            <div key={i} className="p-5 md:p-6 border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a1a21] rounded-xl shadow-sm">
-                              <div className="mb-4">
-                                <span className="font-bold text-base md:text-lg text-slate-800 dark:text-slate-200 block mb-2">
-                                  Câu {i + 1}:
-                                </span>
-                                <div className="text-base font-normal whitespace-pre-wrap font-mono bg-slate-50 dark:bg-slate-900 p-4 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-300">
-                                  {q.questionText}
-                                </div>
-                              </div>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                {['A', 'B', 'C', 'D'].map(opt => {
-                                    if (!q[`option${opt}`]) return null;
-
-                                    const isSelected = userAnswers[i] === opt;
-                                    const isCorrect = q.correctAnswer === opt;
-                                    let btnClass = "p-4 border rounded-xl text-left transition-all font-medium leading-relaxed ";
-
-                                    if (hasSubmitted) {
-                                      if (isCorrect) btnClass += "bg-green-100 border-green-500 text-green-800 dark:bg-green-900/30 dark:border-green-500/50 dark:text-green-400";
-                                      else if (isSelected) btnClass += "bg-red-100 border-red-500 text-red-800 dark:bg-red-900/30 dark:border-red-500/50 dark:text-red-400";
-                                      else btnClass += "bg-slate-50 border-slate-200 text-slate-500 dark:bg-[#1e1e24] dark:border-slate-800 opacity-60";
-                                    } else {
-                                      if (isSelected) btnClass += "bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:border-blue-500 dark:text-blue-400 shadow-sm";
-                                      else btnClass += "bg-slate-50 border-slate-200 hover:bg-slate-100 dark:bg-[#1e1e24] dark:border-slate-700 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300";
-                                    }
-
-                                    return (
-                                        <button key={opt} onClick={() => !hasSubmitted && setUserAnswers({ ...userAnswers, [i]: opt })} className={btnClass} disabled={hasSubmitted}>
-                                          <span className="font-bold mr-1">{opt}.</span> {q[`option${opt}`]}
-                                        </button>
-                                    )
-                                })}
-                              </div>
-                              
-                              {hasSubmitted && (
-                                  <div className={`mt-5 p-4 md:p-5 rounded-xl text-sm border ${userAnswers[i] === q.correctAnswer ? 'bg-green-50 border-green-200 dark:bg-green-900/10 dark:border-green-900/50' : 'bg-red-50 border-red-200 dark:bg-red-900/10 dark:border-red-900/50'}`}>
-                                    <p className={`font-bold mb-1 ${userAnswers[i] === q.correctAnswer ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
-                                      {userAnswers[i] === q.correctAnswer ? '🎉 Chính xác!' : '😢 Sai rồi!'}
-                                    </p>
-                                    <p className="text-slate-700 dark:text-slate-300 leading-relaxed italic">
-                                      Giải thích: {q.explanation}
-                                    </p>
-                                  </div>
-                              )}
-                            </div>
-                        ))}
-                      </div>
-
-                      {!hasSubmitted && Object.keys(userAnswers).length > 0 && (
-                        <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800 flex justify-end">
-                          <button onClick={handleSubmitQuiz} disabled={isSubmitting} className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg transition-all active:scale-95 flex items-center gap-2 text-lg">
-                            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle className="w-5 h-5"/>}
-                            {isSubmitting ? 'Đang chấm...' : 'Nộp Bài & Chấm Điểm'}
-                          </button>
-                        </div>
-                      )}
-                  </div>
+              {quizzes && Array.isArray(quizzes) && quizzes.length > 0 && session?.user?.id && (
+                <AdaptiveVideoQuiz
+                  videoId={currentVideo.videoId}
+                  userId={session.user.id as string}
+                  totalCount={questionCount}
+                  questions={quizzes}
+                  onQuestionsChange={setQuizzes}
+                  userAnswers={userAnswers}
+                  onUserAnswersChange={setUserAnswers}
+                  hasSubmitted={hasSubmitted}
+                  isSubmitting={isSubmitting}
+                  onSubmitQuiz={handleSubmitQuiz}
+                  onError={(msg) => showNotification(msg, "error")}
+                />
               )}
             </>
           )}

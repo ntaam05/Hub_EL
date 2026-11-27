@@ -78,6 +78,13 @@ export async function POST(req: Request) {
     // Sanitize user: omit password
     const { password: _, ...safeUser } = user;
 
+    if ((global as any).__socketIo) {
+      (global as any).__socketIo.to(user.id).emit("session_kicked", {
+        source: "mobile",
+        message: "Tài khoản của bạn vừa được đăng nhập trên ứng dụng Mobile. Vui lòng xác nhận để đăng xuất.",
+      });
+    }
+
     return NextResponse.json({
       success: true,
       data: {

@@ -1,22 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../authentication/presentation/bloc/auth_bloc.dart';
+import '../../../authentication/presentation/bloc/auth_state.dart';
+import '../../../store/presentation/cubit/store_cubit.dart';
 import '../bloc/quiz/quiz_bloc.dart';
 import '../bloc/quiz/quiz_event.dart';
 import '../bloc/quiz/quiz_state.dart';
 
 class AiQuizGeneratorCard extends StatefulWidget {
   final String videoId;
-  final bool isPro;
+  final bool? isPro;
   final int userEnergy;
 
   const AiQuizGeneratorCard({
     super.key,
     required this.videoId,
-    this.isPro = false,
+    this.isPro,
     this.userEnergy = 20,
   });
 
@@ -25,20 +29,54 @@ class AiQuizGeneratorCard extends StatefulWidget {
 }
 
 class _AiQuizGeneratorCardState extends State<AiQuizGeneratorCard> {
+  final TextEditingController _countController = TextEditingController(text: '5');
   int _questionCount = 5;
 
-  int _calculateEnergyCost(int count) {
-    if (widget.isPro) {
+  @override
+  void dispose() {
+    _countController.dispose();
+    super.dispose();
+  }
+
+  bool _resolveIsPro(BuildContext context) {
+    if (widget.isPro != null) return widget.isPro!;
+    try {
+      final storePro = context.watch<StoreCubit>().state.catalog?.balance.isPro;
+      if (storePro == true) return true;
+    } catch (_) {}
+    try {
+      final authState = context.watch<AuthBloc>().state;
+      if (authState is Authenticated) return authState.user.isPro;
+    } catch (_) {}
+    return false;
+  }
+
+  int _calculateEnergyCost(int count, bool isPro) {
+    if (isPro) {
       final discounted = (count * 0.7).ceil();
       return discounted < 1 ? 1 : discounted;
     }
     return count;
   }
 
+  void _updateQuestionCount(int newCount) {
+    final clamped = newCount.clamp(1, 20);
+    setState(() {
+      _questionCount = clamped;
+      if (_countController.text != '$clamped') {
+        _countController.text = '$clamped';
+        _countController.selection = TextSelection.fromPosition(
+          TextPosition(offset: _countController.text.length),
+        );
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final energyCost = _calculateEnergyCost(_questionCount);
+    final isProUser = _resolveIsPro(context);
+    final energyCost = _calculateEnergyCost(_questionCount, isProUser);
 
     return BlocBuilder<QuizBloc, QuizState>(
       builder: (context, state) {
@@ -105,7 +143,7 @@ class _AiQuizGeneratorCardState extends State<AiQuizGeneratorCard> {
                       ),
                     ],
                   ),
-                  if (widget.isPro)
+                  if (isProUser)
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
@@ -121,12 +159,12 @@ class _AiQuizGeneratorCardState extends State<AiQuizGeneratorCard> {
               ),
               AppSpacing.gapV16,
 
-              // Selector Số lượng câu hỏi & Nút Tạo bài tập
+              // Nhập số lượng câu hỏi (1-20) & Nút Tạo bài tập
               Row(
                 children: [
-                  // Bộ chọn số câu hỏi: 3, 5, 10
                   Container(
-                    padding: const EdgeInsets.all(4),
+                    height: 44,
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
                     decoration: BoxDecoration(
                       color: isDark ? const Color(0xFF18181B) : Colors.grey.shade100,
                       borderRadius: BorderRadius.circular(12),
@@ -135,41 +173,67 @@ class _AiQuizGeneratorCardState extends State<AiQuizGeneratorCard> {
                       ),
                     ),
                     child: Row(
-                      children: [3, 5, 10].map((count) {
-                        final isSelected = _questionCount == count;
-                        return InkWell(
-                          onTap: isGenerating ? null : () => setState(() => _questionCount = count),
-                          borderRadius: BorderRadius.circular(8),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? (isDark ? Colors.white12 : Colors.white)
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(8),
-                              boxShadow: isSelected
-                                  ? [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.1),
-                                        blurRadius: 4,
-                                      ),
-                                    ]
-                                  : null,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                          icon: const Icon(LucideIcons.minus, size: 14),
+                          onPressed: (isGenerating || _questionCount <= 1)
+                              ? null
+                              : () => _updateQuestionCount(_questionCount - 1),
+                        ),
+                        SizedBox(
+                          width: 42,
+                          child: TextField(
+                            controller: _countController,
+                            enabled: !isGenerating,
+                            keyboardType: TextInputType.number,
+                            textAlign: TextAlign.center,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                              LengthLimitingTextInputFormatter(2),
+                            ],
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.white : AppColors.lightTextPrimary,
                             ),
-                            child: Text(
-                              '$count câu',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                color: isSelected
-                                    ? AppColors.primaryLight
-                                    : (isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted),
-                              ),
+                            decoration: const InputDecoration(
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: EdgeInsets.symmetric(vertical: 8),
                             ),
+                            onChanged: (val) {
+                              final parsed = int.tryParse(val);
+                              if (parsed != null) {
+                                setState(() => _questionCount = parsed.clamp(1, 20));
+                              }
+                            },
+                            onEditingComplete: () {
+                              _updateQuestionCount(_questionCount);
+                              FocusScope.of(context).unfocus();
+                            },
                           ),
-                        );
-                      }).toList(),
+                        ),
+                        Text(
+                          'câu',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                          ),
+                        ),
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                          icon: const Icon(LucideIcons.plus, size: 14),
+                          onPressed: (isGenerating || _questionCount >= 20)
+                              ? null
+                              : () => _updateQuestionCount(_questionCount + 1),
+                        ),
+                      ],
                     ),
                   ),
                   AppSpacing.gapH12,
@@ -189,10 +253,14 @@ class _AiQuizGeneratorCardState extends State<AiQuizGeneratorCard> {
                         onPressed: isGenerating
                             ? null
                             : () {
+                                final parsed = int.tryParse(_countController.text) ?? _questionCount;
+                                final validCount = parsed.clamp(1, 20);
+                                _updateQuestionCount(validCount);
+                                FocusScope.of(context).unfocus();
                                 context.read<QuizBloc>().add(
                                       GenerateQuizRequested(
                                         videoId: widget.videoId,
-                                        count: _questionCount,
+                                        count: validCount,
                                       ),
                                     );
                               },
@@ -251,11 +319,24 @@ class _AiQuizGeneratorCardState extends State<AiQuizGeneratorCard> {
                                             children: [
                                               const Icon(LucideIcons.zap, size: 10, color: Colors.yellowAccent),
                                               const SizedBox(width: 2),
+                                              if (isProUser && _questionCount > energyCost) ...[
+                                                Text(
+                                                  '$_questionCount',
+                                                  style: const TextStyle(
+                                                    fontSize: 10,
+                                                    color: Colors.white54,
+                                                    decoration: TextDecoration.lineThrough,
+                                                    height: 1.1,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 4),
+                                              ],
                                               Text(
                                                 'Tốn $energyCost⚡',
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   fontSize: 10,
-                                                  color: Colors.white70,
+                                                  fontWeight: isProUser ? FontWeight.bold : FontWeight.normal,
+                                                  color: isProUser ? Colors.yellowAccent : Colors.white70,
                                                   height: 1.1,
                                                 ),
                                               ),

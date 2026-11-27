@@ -1,9 +1,15 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/network/api_result.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/loading_widget.dart';
+import '../../../../shared/widgets/search_suggestions_list.dart';
+import '../../domain/entities/video_item_entity.dart';
+import '../../domain/repositories/learning_repository.dart';
+import '../../domain/usecases/check_video_link_usecase.dart';
 import '../bloc/search/search_bloc.dart';
 import '../bloc/search/search_event.dart';
 import '../bloc/search/search_state.dart';
@@ -22,25 +28,102 @@ class ExploreScreen extends StatefulWidget {
 
 class _ExploreScreenState extends State<ExploreScreen> {
   late final TextEditingController _searchController;
+  final TextEditingController _linkController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+  bool _isCheckingLink = false;
+  bool _showSuggestions = false;
+  List<String> _history = [];
+  List<String> _suggestions = [];
+  Timer? _suggestDebounce;
 
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController(text: widget.initialQuery);
+    _searchFocusNode.addListener(_onSearchFocusChanged);
     if (widget.initialQuery.trim().isNotEmpty) {
       context.read<SearchBloc>().add(SearchVideosRequested(widget.initialQuery.trim()));
+    } else {
+      _loadSuggestions('');
     }
   }
 
   @override
   void dispose() {
+    _suggestDebounce?.cancel();
+    _searchFocusNode.removeListener(_onSearchFocusChanged);
+    _searchFocusNode.dispose();
     _searchController.dispose();
+    _linkController.dispose();
     super.dispose();
   }
 
+  void _onSearchFocusChanged() {
+    if (_searchFocusNode.hasFocus) {
+      setState(() => _showSuggestions = true);
+      _loadSuggestions(_searchController.text);
+    }
+  }
+
+  void _onSearchTextChanged(String text) {
+    if (!_showSuggestions) {
+      setState(() => _showSuggestions = true);
+    }
+    _suggestDebounce?.cancel();
+    _suggestDebounce = Timer(
+      Duration(milliseconds: text.trim().isEmpty ? 0 : 220),
+      () => _loadSuggestions(text),
+    );
+  }
+
+  Future<void> _loadSuggestions(String query) async {
+    try {
+      final repo = context.read<ILearningRepository>();
+      final res = await repo.getSearchSuggestions(query);
+      if (mounted) {
+        setState(() {
+          _history = res.history;
+          _suggestions = res.suggestions;
+        });
+      }
+    } catch (_) {}
+  }
+
   void _onSearchSubmit(String query) {
-    if (query.trim().isNotEmpty) {
-      context.read<SearchBloc>().add(SearchVideosRequested(query.trim()));
+    final trimmed = query.trim();
+    if (trimmed.isNotEmpty) {
+      _searchController.text = trimmed;
+      _searchFocusNode.unfocus();
+      setState(() => _showSuggestions = false);
+      context.read<SearchBloc>().add(SearchVideosRequested(trimmed));
+    }
+  }
+
+  Future<void> _onYoutubeLinkSubmit() async {
+    final link = _linkController.text.trim();
+    if (link.isEmpty || _isCheckingLink) return;
+
+    setState(() => _isCheckingLink = true);
+    try {
+      final checkUseCase = context.read<CheckVideoLinkUseCase>();
+      final result = await checkUseCase(link);
+      if (!mounted) return;
+      if (result is ApiSuccess<VideoItemEntity>) {
+        _linkController.clear();
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => WatchScreen(video: result.data)),
+        );
+      } else if (result is ApiFailure<VideoItemEntity>) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.message),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isCheckingLink = false);
     }
   }
 
@@ -68,7 +151,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
           ),
           child: TextField(
             controller: _searchController,
+            focusNode: _searchFocusNode,
             textInputAction: TextInputAction.search,
+            onChanged: _onSearchTextChanged,
             onSubmitted: _onSearchSubmit,
             style: TextStyle(
               fontSize: 13,
@@ -87,7 +172,79 @@ class _ExploreScreenState extends State<ExploreScreen> {
           ),
         ),
       ),
-      body: BlocBuilder<SearchBloc, SearchState>(
+      body: Stack(
+        children: [
+          Column(
+            children: [
+          // Thanh tìm kiếm riêng dành cho gắn link YouTube (kiểm tra tính hợp lệ trước khi mở)
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkSurface : Colors.white,
+              border: Border(
+                bottom: BorderSide(
+                  color: isDark ? AppColors.darkBorder : Colors.grey.shade200,
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.darkCard : Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isDark ? AppColors.darkBorder : Colors.grey.shade300,
+                      ),
+                    ),
+                    child: TextField(
+                      controller: _linkController,
+                      textInputAction: TextInputAction.go,
+                      onSubmitted: (_) => _onYoutubeLinkSubmit(),
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: isDark ? Colors.white : AppColors.lightTextPrimary,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'Gắn link YouTube vào đây để học ngay...',
+                        hintStyle: TextStyle(
+                          fontSize: 12.5,
+                          color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                        ),
+                        prefixIcon: const Icon(LucideIcons.playCircle, size: 16, color: Colors.redAccent),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                      ),
+                    ),
+                  ),
+                ),
+                AppSpacing.gapH8,
+                SizedBox(
+                  height: 40,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.redAccent,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                    ),
+                    onPressed: _isCheckingLink ? null : _onYoutubeLinkSubmit,
+                    child: _isCheckingLink
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Text('Mở video', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: BlocBuilder<SearchBloc, SearchState>(
         builder: (context, state) {
           if (state is SearchLoading) {
             return const Center(child: LoadingWidget(message: 'Đang tìm kiếm bài giảng giáo dục...'));
@@ -239,6 +396,22 @@ class _ExploreScreenState extends State<ExploreScreen> {
             child: Text('Nhập từ khóa giáo dục để bắt đầu tìm kiếm!'),
           );
         },
+      ),
+          ),
+        ],
+      ),
+          if (_showSuggestions && (_history.isNotEmpty || _suggestions.isNotEmpty))
+            Positioned(
+              top: 8,
+              left: 12,
+              right: 12,
+              child: SearchSuggestionsList(
+                history: _history,
+                suggestions: _suggestions,
+                onSelected: _onSearchSubmit,
+              ),
+            ),
+        ],
       ),
     );
   }

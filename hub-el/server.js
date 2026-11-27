@@ -21,8 +21,8 @@ const app = next({ dev, hostname, port });
 const handler = app.getRequestHandler();
 
 app.prepare().then(() => {
-  // Tạo HTTP Server bọc Next.js
-  const httpServer = createServer(handler);
+  // Tạo HTTP Server bọc Next.js (tăng maxHeaderSize tránh lỗi HTTP 431 khi cookie session chứa dữ liệu lớn)
+  const httpServer = createServer({ maxHeaderSize: 131072 }, handler);
 
   // Khởi tạo Socket.io dùng chung cổng với Next.js
   const io = new Server(httpServer, {
