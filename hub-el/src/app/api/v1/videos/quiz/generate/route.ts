@@ -48,7 +48,7 @@ export async function POST(req: Request) {
     if (errorResponse) return errorResponse;
 
     const body = await req.json();
-    const { videoId, count = 5 } = body;
+    const { videoId, count = 5, mode } = body;
 
     if (!videoId || typeof videoId !== "string") {
       return NextResponse.json(
@@ -64,8 +64,9 @@ export async function POST(req: Request) {
     }
 
     const questionCount = Math.max(1, Math.min(20, Number(count) || 5));
+    const isAdaptive = mode === "adaptive";
 
-    const result = await generateQuizFromVideoAction(userId!, videoId, questionCount);
+    const result = await generateQuizFromVideoAction(userId!, videoId, questionCount, isAdaptive);
 
     if (!result.success) {
       return NextResponse.json(
@@ -89,6 +90,8 @@ export async function POST(req: Request) {
       data: {
         videoId,
         questionCount: questions.length,
+        totalCount: result.totalCount ?? questionCount,
+        difficultyLevel: result.difficultyLevel ?? 2,
         questions,
       },
     });

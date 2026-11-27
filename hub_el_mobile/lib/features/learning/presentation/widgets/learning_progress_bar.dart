@@ -7,12 +7,14 @@ import '../../domain/entities/video_progress_entity.dart';
 class LearningProgressBar extends StatelessWidget {
   final int currentPositionSeconds;
   final int totalDurationSeconds;
+  final int watchedSeconds;
   final bool isCompleted;
 
   const LearningProgressBar({
     super.key,
     required this.currentPositionSeconds,
     required this.totalDurationSeconds,
+    this.watchedSeconds = 0,
     required this.isCompleted,
   });
 
@@ -20,9 +22,12 @@ class LearningProgressBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final double percent = totalDurationSeconds > 0
-        ? (currentPositionSeconds / totalDurationSeconds).clamp(0.0, 1.0)
-        : (isCompleted ? 1.0 : 0.0);
+    final double rawPercent = totalDurationSeconds > 0
+        ? (watchedSeconds / totalDurationSeconds).clamp(0.0, 1.0)
+        : (isCompleted ? 0.5 : 0.0);
+
+    final double displayPercent =
+        isCompleted ? (rawPercent < 0.5 ? 0.5 : rawPercent) : rawPercent;
 
     final String currentTimeStr = VideoProgressEntity.formatSeconds(currentPositionSeconds);
     final String durationStr = VideoProgressEntity.formatSeconds(totalDurationSeconds);
@@ -62,12 +67,12 @@ class LearningProgressBar extends StatelessWidget {
                       Icon(LucideIcons.checkCircle, size: 12, color: AppColors.success),
                       SizedBox(width: 4),
                       Text(
-                        'ĐÃ HOÀN THÀNH',
+                        'ĐÃ HOÀN THÀNH (≥50% · +50 Xu, +50 EXP)',
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
                           color: AppColors.success,
-                          letterSpacing: 0.5,
+                          letterSpacing: 0.3,
                         ),
                       ),
                     ],
@@ -90,12 +95,12 @@ class LearningProgressBar extends StatelessWidget {
                       const Icon(LucideIcons.playCircle, size: 12, color: AppColors.primaryLight),
                       const SizedBox(width: 4),
                       Text(
-                        'TIẾN ĐỘ: ${(percent * 100).toInt()}%',
+                        'TIẾN ĐỘ: ${(displayPercent * 100).toInt()}% / 50%',
                         style: const TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
                           color: AppColors.primaryLight,
-                          letterSpacing: 0.5,
+                          letterSpacing: 0.3,
                         ),
                       ),
                     ],
@@ -115,11 +120,11 @@ class LearningProgressBar extends StatelessWidget {
           ),
           AppSpacing.gapV8,
 
-          // Thanh hiển thị tiến độ
+          // Thanh hiển thị tiến độ (mục tiêu xem đủ 50% video)
           ClipRRect(
             borderRadius: BorderRadius.circular(999),
             child: LinearProgressIndicator(
-              value: percent,
+              value: displayPercent,
               minHeight: 6,
               backgroundColor: isDark ? Colors.white10 : Colors.grey.shade200,
               valueColor: AlwaysStoppedAnimation<Color>(

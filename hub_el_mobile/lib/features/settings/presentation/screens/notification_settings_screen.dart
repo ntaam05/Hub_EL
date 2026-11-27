@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../shared/widgets/lucian_widgets.dart';
 import '../../domain/entities/settings_entities.dart';
 import '../cubit/settings_cubit.dart';
 import '../cubit/settings_state.dart';
@@ -117,9 +118,9 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                           ],
                         ),
                       ),
-                      Switch(
+                      LucianToggleSwitch(
                         value: _localSettings.allowEmail,
-                        activeThumbColor: const Color(0xFF0284C7),
+                        activeColor: const Color(0xFF0284C7),
                         onChanged: (val) {
                           setState(() => _localSettings = _localSettings.copyWith(allowEmail: val));
                         },
@@ -263,12 +264,10 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
     required ValueChanged<bool> onChanged,
     required bool isDark,
   }) {
-    return SwitchListTile(
-      value: value,
-      onChanged: onChanged,
-      activeThumbColor: AppColors.primaryLight,
+    return ListTile(
+      onTap: () => onChanged(!value),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      secondary: Container(
+      leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.12),
@@ -280,6 +279,10 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
       subtitle: Text(
         subtitle,
         style: TextStyle(fontSize: 12, color: isDark ? Colors.white54 : AppColors.lightTextSecondary),
+      ),
+      trailing: LucianToggleSwitch(
+        value: value,
+        onChanged: onChanged,
       ),
     );
   }

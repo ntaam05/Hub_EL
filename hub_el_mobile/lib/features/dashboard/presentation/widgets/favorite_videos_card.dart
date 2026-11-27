@@ -37,12 +37,11 @@ class _FavoriteVideosCardState extends State<FavoriteVideosCard> {
                 const Icon(LucideIcons.heart, size: 18, color: Colors.redAccent),
                 AppSpacing.gapH8,
                 Text(
-                  'VIDEO YÊU THÍCH',
+                  'Video yêu thích',
                   style: AppTextStyles.h3.copyWith(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.2,
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
                   ),
                 ),
               ],

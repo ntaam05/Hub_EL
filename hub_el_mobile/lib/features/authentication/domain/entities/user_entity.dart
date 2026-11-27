@@ -19,6 +19,7 @@ class UserEntity {
   final int currentStreak;
   final int highestStreak;
   final int streakFreezes;
+  final DateTime? lastStudyDate;
   final String? targetLanguage;
   final String? languageLevel;
 
@@ -42,6 +43,7 @@ class UserEntity {
     this.currentStreak = 0,
     this.highestStreak = 0,
     this.streakFreezes = 0,
+    this.lastStudyDate,
     this.targetLanguage = 'en',
     this.languageLevel = 'A2',
   });
@@ -49,6 +51,16 @@ class UserEntity {
   String get displayName => fullName ?? name ?? username ?? email.split('@').first;
   bool get isBanned => role.toLowerCase() == 'banned' || !isActive;
   String? get displayAvatar => image ?? avatar;
+
+  /// Kiểm tra hôm nay người dùng đã học để nối chuỗi streak chưa
+  bool get isStudiedToday {
+    if (lastStudyDate == null) return false;
+    final now = DateTime.now();
+    final localLast = lastStudyDate!.toLocal();
+    return now.year == localLast.year &&
+        now.month == localLast.month &&
+        now.day == localLast.day;
+  }
 
   /// Giới hạn Năng lượng tối đa đồng bộ theo công thức chuẩn Web Hub-EL
   int get maxEnergy {
@@ -76,6 +88,7 @@ class UserEntity {
     int? currentStreak,
     int? highestStreak,
     int? streakFreezes,
+    DateTime? lastStudyDate,
     String? targetLanguage,
     String? languageLevel,
   }) {
@@ -99,6 +112,7 @@ class UserEntity {
       currentStreak: currentStreak ?? this.currentStreak,
       highestStreak: highestStreak ?? this.highestStreak,
       streakFreezes: streakFreezes ?? this.streakFreezes,
+      lastStudyDate: lastStudyDate ?? this.lastStudyDate,
       targetLanguage: targetLanguage ?? this.targetLanguage,
       languageLevel: languageLevel ?? this.languageLevel,
     );

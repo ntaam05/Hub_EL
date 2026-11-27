@@ -39,15 +39,14 @@ class RecentActivitiesCard extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Icon(LucideIcons.history, size: 18, color: Colors.blueAccent),
+            const Icon(LucideIcons.history, size: 18, color: AppColors.primaryLight),
             AppSpacing.gapH8,
             Text(
-              'HOẠT ĐỘNG GẦN ĐÂY',
+              'Hoạt động gần đây',
               style: AppTextStyles.h3.copyWith(
-                fontSize: 13,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 1.2,
-                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
               ),
             ),
           ],
@@ -57,19 +56,12 @@ class RecentActivitiesCard extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDark ? AppColors.spaceCard : Colors.white,
-            borderRadius: BorderRadius.circular(32),
+            color: isDark ? AppColors.darkCard : Colors.white,
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isDark ? AppColors.spaceCardBorder : Colors.grey.shade200,
+              color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
               width: 1,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
-                blurRadius: 25,
-                offset: const Offset(0, 8),
-              ),
-            ],
           ),
           child: activities.isEmpty
               ? const Padding(

@@ -83,11 +83,11 @@ class CustomButton extends StatelessWidget {
         textColor = Colors.white;
         break;
       case ButtonVariant.gradient:
-        gradient = AppColors.primaryGradient;
+        backgroundColor = AppColors.primary;
         textColor = Colors.white;
         break;
       case ButtonVariant.pro:
-        gradient = AppColors.proGradient;
+        backgroundColor = AppColors.proBadge;
         textColor = AppColors.proText;
         break;
       case ButtonVariant.secondary:
@@ -112,7 +112,7 @@ class CustomButton extends StatelessWidget {
         break;
     }
 
-    final radius = borderRadius ?? AppRadius.borderXl;
+    final radius = borderRadius ?? AppRadius.borderMd;
 
     Widget buttonContent = Row(
       mainAxisSize: isFullWidth ? MainAxisSize.max : MainAxisSize.min,

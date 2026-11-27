@@ -49,6 +49,9 @@ class _YoutubePlayerWidgetState extends State<YoutubePlayerWidget> {
 
     // Lắng nghe trạng thái phát (Play / Pause / Ended)
     _playerSub = _controller.listen((event) {
+      if (_cachedDuration <= 0 && event.metaData.duration.inSeconds > 0) {
+        _cachedDuration = event.metaData.duration.inSeconds;
+      }
       if (event.playerState == PlayerState.playing) {
         widget.onPlayStateChanged?.call(true);
       } else if (event.playerState == PlayerState.paused ||

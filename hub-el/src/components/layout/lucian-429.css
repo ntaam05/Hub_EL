@@ -1,0 +1,239 @@
+/* Lucian UX/UI Prompt #429 · MIT License (c) 2026 Seokwoooo · https://lucianlabs.dev/uxui-prompt/#429 */
+
+.u429 {
+  position: relative;
+  width: 100%;
+}
+
+.u429-w {
+  position: relative;
+  width: 100%;
+}
+
+.u429-f {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 42px;
+  padding: 0 9px 0 14px;
+  border-radius: 12px;
+  background: var(--ux-surface);
+  box-shadow: 0 0 0 1px var(--ux-line-2), 0 8px 20px -14px var(--ux-shadow-strong);
+  cursor: text;
+  transition: box-shadow 0.2s var(--ux-ease);
+}
+
+.dark .u429-f {
+  background: var(--ux-surface-2);
+}
+
+.u429-f:focus-within,
+.u429.is-open .u429-f {
+  box-shadow: 0 0 0 1.5px var(--ux-accent), 0 0 0 4px var(--ux-accent-soft),
+    0 10px 24px -14px var(--ux-shadow-strong);
+}
+
+.u429-f > svg {
+  flex: none;
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: var(--ux-ink-3);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.u429-in {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  outline: none;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ux-ink);
+}
+
+.u429-in::placeholder {
+  color: var(--ux-ink-3);
+  opacity: 1;
+}
+
+.u429 .u429-in:focus-visible {
+  outline: none;
+}
+
+.u429-kb {
+  flex: none;
+  height: 24px;
+  padding: 0 7px;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  background: var(--ux-surface-2);
+  box-shadow: inset 0 0 0 1px var(--ux-line);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ux-ink-3);
+}
+
+.dark .u429-kb {
+  background: var(--ux-surface-3);
+}
+
+.u429-dd {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 60;
+  padding: 6px;
+  border-radius: 14px;
+  background: var(--ux-surface);
+  box-shadow: 0 0 0 1px var(--ux-line-2), 0 22px 44px -18px var(--ux-shadow-strong);
+  transform-origin: 50% 0;
+  opacity: 0;
+  transform: translateY(-8px) scale(0.96);
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.16s var(--ux-ease), transform 0.2s var(--ux-ease),
+    visibility 0s linear 0.2s;
+}
+
+.dark .u429-dd {
+  background: var(--ux-surface-2);
+}
+
+.u429.is-open .u429-dd {
+  opacity: 1;
+  transform: none;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity 0.18s var(--ux-ease),
+    transform 0.5s cubic-bezier(0.3, 1.4, 0.5, 1), visibility 0s;
+}
+
+.u429-lb {
+  position: relative;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.u429-pill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 40px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ux-ink) 7%, transparent);
+  transform: translateY(var(--py, 0px));
+  opacity: var(--po, 0);
+  transition: transform 0.45s cubic-bezier(0.3, 1.5, 0.5, 1), opacity 0.15s;
+  pointer-events: none;
+}
+
+.u429-o {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  height: 40px;
+  padding: 0 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  color: var(--ux-ink-2);
+}
+
+.u429.is-open .u429-o {
+  animation: u429-row 0.45s cubic-bezier(0.3, 1.4, 0.5, 1) both;
+  animation-delay: calc(var(--i) * 35ms);
+}
+
+@keyframes u429-row {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+.u429-o[aria-selected="true"] {
+  color: var(--ux-ink);
+}
+
+.u429-ic {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: var(--ux-surface-2);
+  color: var(--ux-ink-2);
+}
+
+.dark .u429-ic {
+  background: var(--ux-surface-3);
+}
+
+.u429-t {
+  flex: 1;
+  min-width: 0;
+  font-size: 13.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.u429-t mark {
+  background: none;
+  color: var(--ux-accent);
+  font-weight: 700;
+}
+
+.u429-m {
+  flex: none;
+  font-size: 11.5px;
+  color: var(--ux-ink-3);
+}
+
+.u429-en {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  box-shadow: inset 0 0 0 1px var(--ux-line-2);
+  font-size: 11px;
+  color: var(--ux-ink-3);
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.15s, transform 0.35s cubic-bezier(0.34, 1.7, 0.5, 1);
+}
+
+.u429-o[aria-selected="true"] .u429-en {
+  opacity: 1;
+  transform: none;
+}
+
+.u429-no {
+  padding: 12px 10px;
+  font-size: 13px;
+  color: var(--ux-ink-3);
+}
+
+.u429-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

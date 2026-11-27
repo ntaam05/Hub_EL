@@ -23,48 +23,41 @@ class QuizRewardDialog extends StatelessWidget {
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 24),
       child: Container(
-        padding: const EdgeInsets.all(28),
+        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1A1D21) : Colors.white,
-          borderRadius: BorderRadius.circular(32),
+          color: isDark ? AppColors.darkCard : Colors.white,
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isDark ? AppColors.darkBorder : Colors.grey.shade200,
+            color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.5),
-              blurRadius: 32,
-              offset: const Offset(0, 12),
-            ),
-          ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Icon Huy chương tỏa sáng
+            // Icon Huy chương
             Container(
-              width: 80,
-              height: 80,
+              width: 60,
+              height: 60,
               decoration: BoxDecoration(
-                color: Colors.green.withValues(alpha: 0.15),
+                color: AppColors.success.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 LucideIcons.award,
-                size: 42,
-                color: Color(0xFF22C55E),
+                size: 30,
+                color: AppColors.success,
               ),
             ),
-            AppSpacing.gapV20,
+            AppSpacing.gapV16,
 
             // Tiêu đề chúc mừng
             Text(
-              'Tuyệt Vời!',
+              'Hoàn thành bài tập',
               style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w900,
-                letterSpacing: -0.5,
-                color: isDark ? Colors.white : AppColors.lightTextPrimary,
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                letterSpacing: -0.3,
+                color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
               ),
             ),
             AppSpacing.gapV8,

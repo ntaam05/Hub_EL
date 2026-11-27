@@ -4,8 +4,8 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
+import '../../../../shared/widgets/lucian_widgets.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -27,6 +27,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   bool _agreeTerms = true;
   bool _showOtpField = false;
+  int _shakeTrigger = 0;
 
   @override
   void dispose() {
@@ -39,9 +40,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void _handleRegister() {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      setState(() => _shakeTrigger++);
+      return;
+    }
 
     if (!_agreeTerms) {
+      setState(() => _shakeTrigger++);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Vui lòng đồng ý với Điều khoản dịch vụ!'),
@@ -94,6 +99,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           child: BlocConsumer<AuthBloc, AuthState>(
             listener: (context, state) {
               if (state is AuthFailure) {
+                setState(() => _shakeTrigger++);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(state.message),
@@ -115,9 +121,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
             },
             builder: (context, state) {
               final isLoading = state is AuthLoading;
+              final btnState = state is Authenticated
+                  ? LucianButtonState.ok
+                  : isLoading
+                      ? LucianButtonState.busy
+                      : LucianButtonState.idle;
 
-              return Form(
-                key: _formKey,
+              return LucianShakeBox(
+                shakeTrigger: _shakeTrigger,
+                child: Form(
+                  key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -250,11 +263,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     AppSpacing.gapV24,
 
-                    // NÚT TẠO TÀI KHOẢN
-                    CustomButton(
-                      text: 'TẠO TÀI KHOẢN',
-                      variant: ButtonVariant.gradient,
-                      isLoading: isLoading,
+                    // NÚT TẠO TÀI KHOẢN (#062 morphing spinner -> checkmark)
+                    LucianPrimaryButton(
+                      label: 'TẠO TÀI KHOẢN',
+                      state: btnState,
                       onPressed: isLoading ? null : _handleRegister,
                     ),
                     AppSpacing.gapV24,
@@ -282,7 +294,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                       ],
                     ),
-                  ],
+                    ],
+                  ),
                 ),
               );
             },

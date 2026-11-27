@@ -1,0 +1,487 @@
+/* Lucian UX/UI Prompt #009 · MIT License (c) 2026 Seokwoooo · https://lucianlabs.dev/uxui-prompt/#009 */
+/* Lucian UX/UI Prompt #014 · MIT License (c) 2026 Seokwoooo · https://lucianlabs.dev/uxui-prompt/#014 */
+/* Lucian UX/UI Prompt #050 · MIT License (c) 2026 Seokwoooo · https://lucianlabs.dev/uxui-prompt/#050 */
+
+/* =========================================================
+   Nền gradient xanh đen đồng bộ Header/Sidebar + Sao băng
+   ========================================================= */
+.dash-bg-gradient {
+  background: linear-gradient(140deg, #f3f7ff 0%, #eaf1fc 52%, #f7faff 100%);
+}
+
+.dark .dash-bg-gradient {
+  background: linear-gradient(140deg, #040814 0%, #09142b 52%, #060d1f 100%);
+}
+
+.dash-card {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--ux-line);
+  box-shadow: 0 2px 10px -4px var(--ux-shadow);
+}
+
+.dark .dash-card {
+  background: linear-gradient(155deg, rgba(16, 28, 54, 0.86) 0%, rgba(9, 17, 36, 0.94) 100%);
+  border: 1px solid rgba(96, 165, 250, 0.14);
+  box-shadow: 0 10px 28px -18px rgba(2, 6, 23, 0.75);
+}
+
+.dash-hero-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f1f6ff 100%);
+  border: 1px solid rgba(37, 99, 235, 0.14);
+  box-shadow: 0 6px 24px -12px rgba(37, 99, 235, 0.16);
+}
+
+.dark .dash-hero-card {
+  background: linear-gradient(135deg, rgba(18, 34, 68, 0.92) 0%, rgba(10, 20, 42, 0.96) 55%, rgba(15, 29, 58, 0.92) 100%);
+  border: 1px solid rgba(59, 130, 246, 0.24);
+  box-shadow: 0 14px 36px -20px rgba(37, 99, 235, 0.35);
+}
+
+/* Hiệu ứng sao băng chạy chéo mượt (GPU-only transform + opacity) */
+.dash-meteors {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.dash-meteor {
+  position: absolute;
+  top: var(--my, 10%);
+  left: var(--mx, 20%);
+  width: var(--mlen, 140px);
+  height: 1.5px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(37, 99, 235, 0.65) 0%, rgba(59, 130, 246, 0.18) 55%, transparent 100%);
+  opacity: 0;
+  transform: rotate(-32deg) translate3d(0, 0, 0);
+  animation: dashMeteorFall var(--mdur, 4.8s) linear var(--mdel, 0s) infinite;
+  will-change: transform, opacity;
+}
+
+.dark .dash-meteor {
+  background: linear-gradient(90deg, rgba(191, 219, 254, 0.95) 0%, rgba(96, 165, 250, 0.45) 45%, transparent 100%);
+  filter: drop-shadow(0 0 4px rgba(96, 165, 250, 0.45));
+}
+
+.dash-meteor::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  transform: translateY(-50%);
+  background: #2563eb;
+}
+
+.dark .dash-meteor::before {
+  background: #eff6ff;
+  box-shadow: 0 0 8px 1px rgba(147, 197, 253, 0.85);
+}
+
+@keyframes dashMeteorFall {
+  0% {
+    opacity: 0;
+    transform: rotate(-32deg) translate3d(180px, 0, 0);
+  }
+  8% {
+    opacity: 0.9;
+  }
+  55% {
+    opacity: 0.55;
+  }
+  75%,
+  100% {
+    opacity: 0;
+    transform: rotate(-32deg) translate3d(-520px, 0, 0);
+  }
+}
+
+/* Dashboard subtle entrance */
+@keyframes dashFadeRise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dash-enter {
+  animation: dashFadeRise 0.38s var(--ux-ease) both;
+}
+
+/* =========================================================
+   #009 Rolling label button (ported for primary dashboard CTA)
+   ========================================================= */
+.u009-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  height: 44px;
+  padding: 0 7px 0 20px;
+  border: 0;
+  border-radius: 11px;
+  background: var(--ux-accent);
+  color: #ffffff;
+  overflow: hidden;
+  isolation: isolate;
+  transition: transform 0.35s var(--ux-spring), background-color 0.25s var(--ux-ease);
+}
+
+.u009-btn:hover {
+  background: var(--ux-accent-2);
+}
+
+.u009-btn:active {
+  transform: scale(0.97);
+}
+
+.u009-btn:focus-visible {
+  outline: 2px solid var(--ux-accent);
+  outline-offset: 3px;
+}
+
+.u009-word {
+  position: relative;
+  display: flex;
+  height: 20px;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.u009-face {
+  display: flex;
+}
+
+.u009-face > span {
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.45s var(--ux-ease);
+  transition-delay: calc(var(--i) * 18ms);
+}
+
+.u009-face > span::after {
+  content: attr(data-c);
+  display: block;
+}
+
+.u009-btn:hover .u009-face > span,
+.u009-btn:focus-visible .u009-face > span {
+  transform: translateY(-20px);
+}
+
+.u009-orb {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  color: currentColor;
+  overflow: hidden;
+  transition: transform 0.45s var(--ux-spring);
+}
+
+.u009-orb svg {
+  position: absolute;
+  left: 7px;
+  top: 7px;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.45s var(--ux-ease);
+}
+
+.u009-orb svg + svg {
+  transform: translate(-24px, 24px);
+}
+
+.u009-btn:hover .u009-orb svg:first-child {
+  transform: translate(24px, -24px);
+}
+
+.u009-btn:hover .u009-orb svg + svg {
+  transform: none;
+  transition-delay: 0.06s;
+}
+
+/* =========================================================
+   #014 To-do checklist (ported compact for Nhiệm vụ hôm nay)
+   ========================================================= */
+.u014-ring {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  flex: none;
+}
+
+.u014-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.u014-ring circle {
+  fill: none;
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+
+.u014-ring .bg {
+  stroke: var(--ux-surface-3);
+}
+
+.u014-ring .fg {
+  stroke: var(--ux-accent);
+  stroke-dasharray: 125.7;
+  stroke-dashoffset: calc(125.7 * (1 - var(--p, 0)));
+  transition: stroke-dashoffset 0.7s var(--ux-spring), stroke 0.4s var(--ux-ease);
+}
+
+.u014.is-all .u014-ring .fg {
+  stroke: var(--ux-mint);
+}
+
+.u014-num {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 11.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--ux-ink);
+  transition: opacity 0.3s, transform 0.5s var(--ux-spring);
+}
+
+.u014-done {
+  position: absolute;
+  inset: 7px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--ux-mint);
+  color: #ffffff;
+  transform: scale(0);
+  transition: transform 0.55s var(--ux-spring);
+}
+
+.u014-done svg {
+  width: 14px;
+  height: 14px;
+  transform: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.u014.is-all .u014-num {
+  opacity: 0;
+  transform: scale(0.5);
+}
+
+.u014.is-all .u014-done {
+  transform: none;
+}
+
+.u014-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 9px;
+  background: var(--ux-surface-2);
+  border: 1px solid var(--ux-line);
+  transition: background-color 0.2s var(--ux-ease), border-color 0.2s var(--ux-ease);
+}
+
+.u014-box {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  flex: none;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px var(--ux-line-2);
+  transition: box-shadow 0.3s var(--ux-ease), transform 0.45s var(--ux-spring);
+}
+
+.u014-box::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--ux-mint);
+  transform: scale(0);
+  transition: transform 0.45s var(--ux-spring);
+}
+
+.u014-box svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.u014-box path {
+  stroke-dasharray: 18;
+  stroke-dashoffset: 18;
+  transition: stroke-dashoffset 0.35s var(--ux-ease);
+}
+
+.u014-row.is-done .u014-box {
+  box-shadow: none;
+}
+
+.u014-row.is-done .u014-box::before {
+  transform: scale(1);
+}
+
+.u014-row.is-done .u014-box path {
+  stroke-dashoffset: 0;
+  transition-delay: 0.1s;
+}
+
+.u014-t {
+  position: relative;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ux-ink);
+  transition: color 0.35s var(--ux-ease);
+}
+
+.u014-t::after {
+  content: "";
+  position: absolute;
+  left: -1px;
+  right: -1px;
+  top: 52%;
+  height: 1.5px;
+  border-radius: 2px;
+  background: var(--ux-ink-3);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  transition: transform 0.4s var(--ux-ease);
+}
+
+.u014-row.is-done .u014-t {
+  color: var(--ux-ink-3);
+}
+
+.u014-row.is-done .u014-t::after {
+  transform: scaleX(1);
+  transition-delay: 0.12s;
+}
+
+/* =========================================================
+   #050 Spotlight-tilt card (ported for video cards)
+   ========================================================= */
+.u050-card {
+  position: relative;
+  border-radius: 12px;
+  background: var(--ux-surface-2);
+  border: 1px solid var(--ux-line);
+  padding: 10px;
+  transform-style: preserve-3d;
+  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform 0.55s var(--ux-ease), border-color 0.25s var(--ux-ease), background-color 0.25s var(--ux-ease);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.u050-card.is-live {
+  transition: border-color 0.25s var(--ux-ease), background-color 0.25s var(--ux-ease);
+  border-color: var(--ux-line-2);
+}
+
+.u050-glare {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%), rgba(255, 255, 255, 0.14), transparent 62%);
+  transition: opacity 0.35s;
+  z-index: 2;
+}
+
+.u050-card.is-live .u050-glare {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dash-meteors {
+    display: none;
+  }
+}
+
+/* =========================================================
+   #003 Hold to delete (ported for destructive confirm modal)
+   ========================================================= */
+.u003-btn {
+  --p: 0;
+  position: relative;
+  width: 100%;
+  height: 44px;
+  border: 0;
+  border-radius: 10px;
+  padding: 0;
+  overflow: hidden;
+  isolation: isolate;
+  background: color-mix(in srgb, var(--ux-danger) 12%, var(--ux-surface-2));
+  color: var(--ux-danger);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ux-danger) 35%, transparent);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: transform 0.35s var(--ux-spring);
+}
+
+.u003-btn:focus-visible {
+  outline: 2px solid var(--ux-danger);
+  outline-offset: 2px;
+}
+
+.u003-lab {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.u003-fill {
+  position: absolute;
+  inset: 0;
+  background: var(--ux-danger);
+  color: #ffffff;
+  clip-path: inset(0 calc(100% - var(--p) * 100%) 0 0 round 10px);
+}
+
+.u003-btn.is-holding {
+  transform: scale(0.985);
+}

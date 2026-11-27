@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../shared/widgets/lucian_widgets.dart';
 import '../cubit/friends_cubit.dart';
 import '../cubit/friends_state.dart';
 import '../widgets/blocked_user_card.dart';
@@ -323,29 +324,31 @@ class _FriendsScreenState extends State<FriendsScreen> {
                       return FriendCard(
                         friend: friend,
                         onTap: () => UserProfileBottomSheet.show(context, friend.id),
-                        onRemove: () async {
-                          final confirm = await ConfirmActionDialog.show(
+                        onRemove: () {
+                          LucianConfirmHoldDialog.show(
                             context,
                             title: 'Hủy kết bạn?',
-                            content: 'Bạn có chắc chắn muốn hủy kết bạn với ${friend.name}?',
-                            confirmLabel: 'Hủy kết bạn',
-                            isDestructive: true,
+                            description: 'Bạn có chắc chắn muốn hủy kết bạn với ${friend.name}?',
+                            holdLabel: 'Giữ để hủy kết bạn',
+                            onConfirmed: () {
+                              if (context.mounted) {
+                                context.read<FriendsCubit>().removeFriend(friend.id);
+                              }
+                            },
                           );
-                          if (confirm == true && context.mounted) {
-                            context.read<FriendsCubit>().removeFriend(friend.id);
-                          }
                         },
-                        onBlock: () async {
-                          final confirm = await ConfirmActionDialog.show(
+                        onBlock: () {
+                          LucianConfirmHoldDialog.show(
                             context,
                             title: 'Chặn người dùng?',
-                            content: 'Sau khi chặn, người này sẽ không thể nhắn tin hay thấy hồ sơ của bạn.',
-                            confirmLabel: 'Chặn',
-                            isDestructive: true,
+                            description: 'Sau khi chặn, người này sẽ không thể nhắn tin hay thấy hồ sơ của bạn.',
+                            holdLabel: 'Giữ để chặn',
+                            onConfirmed: () {
+                              if (context.mounted) {
+                                context.read<FriendsCubit>().blockUser(friend.id);
+                              }
+                            },
                           );
-                          if (confirm == true && context.mounted) {
-                            context.read<FriendsCubit>().blockUser(friend.id);
-                          }
                         },
                       );
                     },

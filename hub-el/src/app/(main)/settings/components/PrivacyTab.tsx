@@ -6,6 +6,9 @@ import { Ban, Unlock, Loader2, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getOtherUserProfile, getBlockedUsersAction, unblockUserAction } from '@/actions/social/social';
 import { updatePrivacyAction } from '@/actions/user/settings';
+import StretchySwitch from './StretchySwitch';
+import { RollingActionButton } from '../../dashboard/LucianPrimitives';
+import ConfirmHoldDialog, { ConfirmDialogState } from '../../social/components/ConfirmHoldDialog';
 
 export default function PrivacyTab({ showNotification }: { showNotification: (msg: string, type: 'success' | 'error') => void }) {
   const { data: session } = useSession();
@@ -21,6 +24,7 @@ export default function PrivacyTab({ showNotification }: { showNotification: (ms
   });
   
   const [blockedUsers, setBlockedUsers] = useState<any[]>([]);
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -59,17 +63,24 @@ export default function PrivacyTab({ showNotification }: { showNotification: (ms
       setIsSending(false);
   }
 
-  const handleUnblock = async (id: string) => { 
-      if(confirm("Bạn có chắc muốn bỏ chặn người này?")) { 
-          const res = await unblockUserAction(session?.user?.id as string, id);
-          if (res.success) {
-             setBlockedUsers(prev => prev.filter(u => u.id !== id)); 
-             showNotification("Đã bỏ chặn thành công!", "success"); 
-          } else {
-             showNotification("Lỗi bỏ chặn", "error"); 
-          }
-      } 
-  }
+  const handleUnblock = (user: any) => {
+    setConfirmDialog({
+      title: "Bỏ chặn người dùng",
+      description: "Người này sẽ có thể tìm thấy và nhắn tin lại với bạn",
+      holdLabel: "Giữ để bỏ chặn",
+      avatarUrl: user.avatar,
+      targetName: user.name,
+      onConfirm: async () => {
+        const res = await unblockUserAction(session?.user?.id as string, user.id);
+        if (res.success) {
+          setBlockedUsers((prev) => prev.filter((u) => u.id !== user.id));
+          showNotification("Đã bỏ chặn thành công", "success");
+        } else {
+          showNotification("Lỗi bỏ chặn", "error");
+        }
+      },
+    });
+  };
 
   if (!isDataLoaded) return <div className="p-10 flex justify-center"><Loader2 className="animate-spin text-cyan-500 w-8 h-8"/></div>;
 
@@ -83,9 +94,11 @@ export default function PrivacyTab({ showNotification }: { showNotification: (ms
                     <h3 className="font-bold text-slate-900 dark:text-white">Hiển thị trạng thái Online</h3>
                     <p className="text-sm text-slate-500 mt-0.5">Cho phép người khác thấy dấu chấm xanh khi bạn đang hoạt động.</p>
                   </div>
-                  <button onClick={() => setPrivacySettings({...privacySettings, showOnline: !privacySettings.showOnline})} className={cn("w-12 h-6 rounded-full relative transition-colors duration-300", privacySettings.showOnline ? "bg-cyan-500" : "bg-slate-300 dark:bg-slate-700")}>
-                    <div className={cn("w-4 h-4 rounded-full bg-white absolute top-1 transition-transform duration-300", privacySettings.showOnline ? "translate-x-7" : "translate-x-1")} />
-                  </button>
+                  <StretchySwitch
+                    checked={privacySettings.showOnline}
+                    onChange={(next) => setPrivacySettings({ ...privacySettings, showOnline: next })}
+                    ariaLabel="Hiển thị trạng thái Online"
+                  />
               </div>
               
               {privacySettings.showOnline && (
@@ -112,9 +125,11 @@ export default function PrivacyTab({ showNotification }: { showNotification: (ms
                     <h3 className="font-bold text-slate-900 dark:text-white">Công khai thông tin (Public Profile)</h3>
                     <p className="text-sm text-slate-500 mt-0.5">Cho phép người khác xem danh sách bạn bè, thành tựu và chỉ số học tập của bạn.</p>
                   </div>
-                  <button onClick={() => setPrivacySettings({...privacySettings, publicProfile: !privacySettings.publicProfile})} className={cn("w-12 h-6 rounded-full relative transition-colors duration-300", privacySettings.publicProfile ? "bg-cyan-600" : "bg-slate-300 dark:bg-slate-700")}>
-                    <div className={cn("w-4 h-4 rounded-full bg-white absolute top-1 transition-transform duration-300", privacySettings.publicProfile ? "translate-x-7" : "translate-x-1")} />
-                  </button>
+                  <StretchySwitch
+                    checked={privacySettings.publicProfile}
+                    onChange={(next) => setPrivacySettings({ ...privacySettings, publicProfile: next })}
+                    ariaLabel="Công khai thông tin hồ sơ"
+                  />
               </div>
 
               {privacySettings.publicProfile && (
@@ -144,7 +159,7 @@ export default function PrivacyTab({ showNotification }: { showNotification: (ms
                           <img src={u.avatar} className="w-10 h-10 rounded-full border dark:border-slate-700 object-cover" />
                           <p className="font-bold text-[15px]">{u.name}</p>
                       </div>
-                      <button onClick={() => handleUnblock(u.id)} className="px-4 py-1.5 text-xs font-bold rounded-lg bg-transparent border border-slate-300 dark:border-slate-600 hover:border-slate-400 dark:hover:border-slate-500 transition-all flex items-center gap-1">
+                      <button onClick={() => handleUnblock(u)} className="px-4 py-1.5 text-xs font-medium rounded-lg bg-[var(--ux-surface-2)] border border-[var(--ux-line)] hover:border-[var(--ux-line-2)] text-[var(--ux-ink)] transition-colors flex items-center gap-1.5">
                           <Unlock className="w-3.5 h-3.5" /> Bỏ chặn
                       </button>
                     </div>
@@ -157,11 +172,16 @@ export default function PrivacyTab({ showNotification }: { showNotification: (ms
         </div>
         
         <div className="flex justify-start pt-6 border-t border-slate-200 dark:border-slate-800/50 max-w-4xl">
-          <button disabled={isSaving} onClick={handleSavePrivacy} className="cursor-pointer px-10 py-3.5 bg-cyan-600 hover:bg-cyan-500 text-white font-black rounded-xl shadow-lg shadow-cyan-900/20 flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50">
-            {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />}
-            Lưu Quyền riêng tư
-          </button>
+          <RollingActionButton
+            label={isSaving ? "Đang lưu..." : "Lưu quyền riêng tư"}
+            onClick={() => { if (!isSaving) handleSavePrivacy(); }}
+          />
         </div>
+
+        <ConfirmHoldDialog
+          config={confirmDialog}
+          onClose={() => setConfirmDialog(null)}
+        />
     </div>
   );
 }

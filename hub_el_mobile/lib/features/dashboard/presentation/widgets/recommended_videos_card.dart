@@ -30,18 +30,17 @@ class RecommendedVideosCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'DÀNH CHO BẠN',
+                  'Dành cho bạn',
                   style: AppTextStyles.h3.copyWith(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.2,
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
                   ),
                 ),
                 Text(
                   'Danh sách phát dựa trên sở thích của bạn',
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 11,
                     color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
                   ),
                 ),
@@ -54,19 +53,12 @@ class RecommendedVideosCard extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDark ? AppColors.spaceCard : Colors.white,
-            borderRadius: BorderRadius.circular(32),
+            color: isDark ? AppColors.darkCard : Colors.white,
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isDark ? AppColors.spaceCardBorder : Colors.grey.shade200,
+              color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
               width: 1,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
-                blurRadius: 25,
-                offset: const Offset(0, 8),
-              ),
-            ],
           ),
           child: videos.isEmpty
               ? const Padding(

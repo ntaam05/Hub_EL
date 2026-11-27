@@ -1,23 +1,42 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useTheme } from 'next-themes';
-import { 
-  LayoutDashboard, Users, BookOpen, Heart, Filter, 
-  ShieldAlert, MessageSquareQuote, Sparkles, CreditCard, 
-  Target, Menu, X, ChevronRight, LogOut, ShieldCheck,
-  Sun, Moon
-} from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useTheme } from "next-themes";
+import {
+  LayoutDashboard,
+  Users,
+  BookOpen,
+  Heart,
+  Filter,
+  ShieldAlert,
+  MessageSquareQuote,
+  Sparkles,
+  CreditCard,
+  Target,
+  Menu,
+  X,
+  LogOut,
+  ShieldCheck,
+  Sun,
+  Moon,
+} from "lucide-react";
+import "../(main)/dashboard/lucian-dashboard.css";
 
-// Toàn bộ menu của Admin
+const METEORS = [
+  { top: "8%", left: "26%", len: "145px", dur: "4.8s", del: "0.2s" },
+  { top: "22%", left: "66%", len: "175px", dur: "5.5s", del: "1.4s" },
+  { top: "46%", left: "44%", len: "155px", dur: "5.1s", del: "0.9s" },
+  { top: "68%", left: "80%", len: "135px", dur: "4.6s", del: "2.3s" },
+];
+
 const FULL_MENU = [
   { name: "Tổng quan", icon: LayoutDashboard, path: "/admin" },
   { name: "Người dùng", icon: Users, path: "/admin/users" },
   { name: "Học tập", icon: BookOpen, path: "/admin/learning" },
   { name: "Sở thích", icon: Heart, path: "/admin/interests" },
-  { name: "Bộ lọc", icon: Filter, path: "/admin/keywords" }, 
+  { name: "Bộ lọc", icon: Filter, path: "/admin/keywords" },
   { name: "Kiểm duyệt", icon: ShieldAlert, path: "/admin/moderation" },
   { name: "Góp ý", icon: MessageSquareQuote, path: "/admin/feedback" },
   { name: "Thẻ Wiki", icon: Sparkles, path: "/admin/wiki" },
@@ -25,163 +44,213 @@ const FULL_MENU = [
   { name: "Nhiệm vụ", icon: Target, path: "/admin/quests" },
 ];
 
-// 3 menu quan trọng nhất hiển thị ở Bottom Bar (Mobile)
 const BOTTOM_NAV = [
   { name: "Tổng quan", icon: LayoutDashboard, path: "/admin" },
   { name: "Người dùng", icon: Users, path: "/admin/users" },
   { name: "Giao dịch", icon: CreditCard, path: "/admin/orders" },
 ];
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
-  // Cờ hiệu để biết component đã mount xong (chống lỗi hydration của next-themes)
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Tự động đóng Menu Mobile khi chuyển trang
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [pathname]);
 
-  // Ngăn cuộn trang nền khi mở Menu Mobile
   useEffect(() => {
-    if (isMobileMenuOpen) document.body.style.overflow = 'hidden';
-    else document.body.style.overflow = 'auto';
-    return () => { document.body.style.overflow = 'auto'; };
+    if (isMobileMenuOpen) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "auto";
+    return () => {
+      document.body.style.overflow = "auto";
+    };
   }, [isMobileMenuOpen]);
 
+  const activeTitle =
+    FULL_MENU.find((m) => m.path === pathname)?.name || "Quản trị hệ thống";
+
   return (
-    <div className="flex h-screen bg-slate-50 dark:bg-[#020617] overflow-hidden font-sans">
-      
-      {/* 1. SIDEBAR CHO DESKTOP (Ẩn trên Mobile) & DRAWER CHO MOBILE */}
+    <div className="ux dash-bg-gradient flex h-screen overflow-hidden relative">
       {/* Lớp mờ background trên Mobile */}
       {isMobileMenuOpen && (
-        <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] md:hidden transition-opacity"
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-[2px] z-[90] md:hidden"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
 
-      {/* Thanh Sidebar chính */}
-      <aside className={`fixed inset-y-0 left-0 z-[100] w-[280px] bg-white dark:bg-[#0f172a] border-r border-slate-200 dark:border-slate-800 flex flex-col transition-transform duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}`}>
-        
-        {/* Header của Sidebar */}
-        <div className="h-16 md:h-20 flex items-center justify-between px-6 border-b border-slate-100 dark:border-slate-800/60 shrink-0">
-          <Link href="/admin" className="flex items-center gap-3 group">
-            <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/20 group-hover:scale-105 transition-transform">
-                <ShieldCheck className="w-5 h-5 text-white" />
+      {/* SIDEBAR ADMIN */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-[100] w-[260px] bg-[var(--ux-surface)] border-r border-[var(--ux-line)] flex flex-col transition-transform duration-300 ease-out md:translate-x-0 ${
+          isMobileMenuOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
+        }`}
+      >
+        <div className="h-16 flex items-center justify-between px-5 border-b border-[var(--ux-line)] shrink-0">
+          <Link href="/admin" className="flex items-center gap-2.5">
+            <div className="w-8 h-8 bg-[var(--ux-accent)] rounded-lg flex items-center justify-center text-white">
+              <ShieldCheck className="w-4 h-4" strokeWidth={1.75} />
             </div>
-            <span className="font-black text-xl text-slate-800 dark:text-white tracking-tight">Hub-EL <span className="text-blue-600">Admin</span></span>
+            <span className="font-semibold text-base text-[var(--ux-ink)]">
+              Hub-EL{" "}
+              <span className="text-[var(--ux-accent)] font-medium">Admin</span>
+            </span>
           </Link>
-          {/* Nút đóng Menu trên Mobile */}
-          <button onClick={() => setIsMobileMenuOpen(false)} className="md:hidden p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-full">
-            <X size={18} />
+
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen(false)}
+            aria-label="Đóng menu"
+            className="md:hidden w-8 h-8 bg-[var(--ux-surface-2)] border border-[var(--ux-line)] text-[var(--ux-ink-2)] rounded-lg flex items-center justify-center"
+          >
+            <X size={16} />
           </button>
         </div>
 
-        {/* Danh sách Menu */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-4 flex flex-col gap-1.5">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-2">Quản lý hệ thống</p>
+        <nav className="flex-1 overflow-y-auto p-3 flex flex-col gap-1">
+          <p className="text-[11px] font-medium text-[var(--ux-ink-3)] mb-1.5 px-2.5 pt-1">
+            Quản lý hệ thống
+          </p>
           {FULL_MENU.map((item) => {
             const isActive = pathname === item.path;
             const Icon = item.icon;
             return (
-              <Link key={item.path} href={item.path}
-                className={`flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group ${
-                  isActive 
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20' 
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white'
+              <Link
+                key={item.path}
+                href={item.path}
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors border text-sm font-medium ${
+                  isActive
+                    ? "bg-[var(--ux-accent-soft)] text-[var(--ux-accent)] border-[var(--ux-accent)]/25"
+                    : "border-transparent text-[var(--ux-ink-2)] hover:bg-[var(--ux-surface-2)] hover:text-[var(--ux-ink)]"
                 }`}
               >
-                <div className="flex items-center gap-3">
-                  <Icon size={18} className={isActive ? 'text-white' : 'text-slate-400 group-hover:text-blue-500 transition-colors'} />
-                  <span className="font-semibold text-sm">{item.name}</span>
-                </div>
-                {!isActive && <ChevronRight size={16} className="text-slate-300 dark:text-slate-700 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />}
+                <Icon
+                  size={17}
+                  strokeWidth={1.75}
+                  className={
+                    isActive
+                      ? "text-[var(--ux-accent)]"
+                      : "text-[var(--ux-ink-3)]"
+                  }
+                />
+                <span>{item.name}</span>
               </Link>
             );
           })}
-        </div>
+        </nav>
 
-        {/* Nút Đăng xuất ở cuối Sidebar */}
-        <div className="p-4 border-t border-slate-100 dark:border-slate-800 shrink-0">
-          <Link href="/dashboard" className="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400 rounded-xl transition-colors font-semibold text-sm">
-            <LogOut size={18} /> Về trang học viên
+        <div className="p-3 border-t border-[var(--ux-line)] shrink-0">
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-2.5 px-3 py-2 text-[var(--ux-ink-2)] hover:bg-[var(--ux-danger)]/10 hover:text-[var(--ux-danger)] rounded-lg transition-colors font-medium text-sm"
+          >
+            <LogOut size={17} strokeWidth={1.75} />
+            Về trang học viên
           </Link>
         </div>
       </aside>
 
-      {/* 2. KHU VỰC NỘI DUNG CHÍNH (MAIN CONTENT) */}
-      <div className="flex-1 flex flex-col min-w-0 md:ml-[280px]">
-        
+      {/* KHU VỰC NỘI DUNG CHÍNH */}
+      <div className="flex-1 flex flex-col min-w-0 md:ml-[260px] relative">
+        {/* Hiệu ứng sao băng chạy nền */}
+        <div className="dash-meteors" aria-hidden="true">
+          {METEORS.map((m, idx) => (
+            <span
+              key={idx}
+              className="dash-meteor"
+              style={
+                {
+                  "--my": m.top,
+                  "--mx": m.left,
+                  "--mlen": m.len,
+                  "--mdur": m.dur,
+                  "--mdel": m.del,
+                } as React.CSSProperties
+              }
+            />
+          ))}
+        </div>
+
         {/* Top Bar */}
-        <header className="h-16 md:h-20 bg-white/80 dark:bg-[#0f172a]/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 md:px-8 z-40 sticky top-0">
+        <header className="h-16 bg-[var(--ux-surface)]/90 backdrop-blur-md border-b border-[var(--ux-line)] flex items-center justify-between px-4 sm:px-6 z-40 sticky top-0">
           <div className="flex items-center gap-3">
-             {/* Nút mở Menu trên Mobile */}
-             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center md:hidden">
-                <ShieldCheck className="w-5 h-5 text-white" />
-             </div>
-             <h1 className="font-bold text-lg text-slate-800 dark:text-white md:hidden">Admin Panel</h1>
-             <h1 className="font-black text-2xl text-slate-800 dark:text-white hidden md:block">Bảng điều khiển</h1>
+            <button
+              type="button"
+              onClick={() => setIsMobileMenuOpen(true)}
+              aria-label="Mở menu quản trị"
+              className="md:hidden w-9 h-9 rounded-lg bg-[var(--ux-surface-2)] border border-[var(--ux-line)] text-[var(--ux-ink-2)] flex items-center justify-center"
+            >
+              <Menu size={18} />
+            </button>
+            <h1 className="font-semibold text-base sm:text-lg text-[var(--ux-ink)]">
+              {activeTitle}
+            </h1>
           </div>
-          
-          <div className="flex items-center gap-3">
-             {/* Nút Chuyển Đổi Giao Diện Sáng/Tối */}
-             {mounted && (
-               <button 
-                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                  className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors active:scale-95 shadow-sm"
-                  title="Chuyển đổi giao diện"
-               >
-                  {theme === 'dark' ? <Sun size={20} className="text-yellow-500" /> : <Moon size={20} className="text-indigo-500" />}
-               </button>
-             )}
+
+          <div className="flex items-center gap-2">
+            {mounted && (
+              <button
+                type="button"
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="w-9 h-9 bg-[var(--ux-surface-2)] border border-[var(--ux-line)] rounded-lg flex items-center justify-center text-[var(--ux-ink-2)] hover:text-[var(--ux-ink)] hover:border-[var(--ux-line-2)] transition-colors"
+                title="Chuyển đổi giao diện"
+              >
+                {theme === "dark" ? (
+                  <Sun size={17} className="text-[var(--ux-warn)]" />
+                ) : (
+                  <Moon size={17} className="text-[var(--ux-accent)]" />
+                )}
+              </button>
+            )}
           </div>
         </header>
 
         {/* Nội dung các trang */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 pb-[100px] md:pb-8 custom-scrollbar">
+        <main className="relative z-10 flex-1 overflow-y-auto p-4 sm:p-6 pb-[96px] md:pb-8">
           {children}
         </main>
       </div>
 
-      {/* 3. BOTTOM TAB BAR CHO MOBILE */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-[#0f172a]/90 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 flex justify-around items-center h-[70px] z-[80] pb-safe px-2 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+      {/* BOTTOM TAB BAR CHO MOBILE */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-[var(--ux-surface)]/95 backdrop-blur-md border-t border-[var(--ux-line)] flex justify-around items-center h-16 z-[80] px-2">
         {BOTTOM_NAV.map((item) => {
           const isActive = pathname === item.path;
           const Icon = item.icon;
           return (
-            <Link key={item.path} href={item.path} className="flex-1 flex flex-col items-center justify-center gap-1.5 p-2 transition-all active:scale-95">
-              <div className={`p-1.5 rounded-xl transition-colors ${isActive ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-transparent'}`}>
-                  <Icon size={22} className={isActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500'} />
+            <Link
+              key={item.path}
+              href={item.path}
+              className="flex-1 flex flex-col items-center justify-center gap-1 p-1.5"
+            >
+              <div
+                className={`p-1.5 rounded-lg transition-colors ${
+                  isActive
+                    ? "bg-[var(--ux-accent-soft)] text-[var(--ux-accent)]"
+                    : "text-[var(--ux-ink-3)]"
+                }`}
+              >
+                <Icon size={18} strokeWidth={1.75} />
               </div>
-              <span className={`text-[10px] font-bold ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500'}`}>{item.name}</span>
+              <span
+                className={`text-[11px] font-medium ${
+                  isActive ? "text-[var(--ux-accent)]" : "text-[var(--ux-ink-3)]"
+                }`}
+              >
+                {item.name}
+              </span>
             </Link>
           );
         })}
-        
-        {/* Nút Hamburger để mở toàn bộ Menu */}
-        <button onClick={() => setIsMobileMenuOpen(true)} className="flex-1 flex flex-col items-center justify-center gap-1.5 p-2 transition-all active:scale-95">
-          <div className="p-1.5 bg-slate-100 dark:bg-slate-800 rounded-xl">
-             <Menu size={22} className="text-slate-700 dark:text-slate-300" />
-          </div>
-          <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400">Thêm</span>
-        </button>
       </nav>
-
-      {/* CSS làm đẹp thanh cuộn */}
-      <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
-        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
-      `}</style>
     </div>
   );
 }

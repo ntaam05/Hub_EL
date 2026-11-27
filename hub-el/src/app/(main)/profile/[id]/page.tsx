@@ -10,6 +10,15 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getOtherUserProfile, addFriendAction, removeFriendAction } from '@/actions/social/social';
+import { RollingActionButton } from '../../dashboard/LucianPrimitives';
+import '../../dashboard/lucian-dashboard.css';
+
+const METEORS = [
+  { top: '8%', left: '24%', len: '145px', dur: '4.8s', del: '0.2s' },
+  { top: '20%', left: '66%', len: '175px', dur: '5.5s', del: '1.4s' },
+  { top: '46%', left: '44%', len: '155px', dur: '5.1s', del: '0.9s' },
+  { top: '68%', left: '80%', len: '135px', dur: '4.6s', del: '2.3s' },
+];
 
 const SafeAvatar = ({ src, name, className }: { src: string | null, name: string, className?: string }) => {
   const [error, setError] = useState(false);
@@ -77,12 +86,25 @@ const displayFriends = profileData.isProfileHidden
         : (profileData.friends || []);
 
   return (
-    <div className="min-h-screen w-full bg-slate-50 dark:bg-[#020617] font-sans text-slate-900 dark:text-slate-100 overflow-x-hidden relative">
+    <div className="dash-bg-gradient min-h-screen w-full font-sans text-slate-900 dark:text-slate-100 overflow-x-hidden relative">
       
-      {/* TRANG TRÍ BACKGROUND */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-          <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-[120px]" />
-          <div className="absolute top-[20%] -right-[10%] w-[30%] h-[30%] bg-purple-500/5 dark:bg-purple-500/10 rounded-full blur-[100px]" />
+      {/* HIỆU ỨNG SAO BĂNG CHẠY NỀN */}
+      <div className="dash-meteors" aria-hidden="true">
+        {METEORS.map((m, idx) => (
+          <span
+            key={idx}
+            className="dash-meteor"
+            style={
+              {
+                '--my': m.top,
+                '--mx': m.left,
+                '--mlen': m.len,
+                '--mdur': m.dur,
+                '--mdel': m.del,
+              } as React.CSSProperties
+            }
+          />
+        ))}
       </div>
 
       {notification && (
@@ -134,14 +156,10 @@ const displayFriends = profileData.isProfileHidden
 
           <div className="flex flex-wrap gap-2 justify-center md:justify-start">
             {session?.user?.id === profileData.id ? (
-               <button 
-                 onClick={() => router.push('/settings')} 
-                 className="group flex items-center justify-center gap-2 px-6 py-2 bg-transparent text-slate-800 dark:text-white hover:text-cyan-600 dark:hover:text-cyan-400 rounded-md font-bold text-sm border border-slate-300 dark:border-slate-700 hover:border-cyan-500 transition-all shadow-sm cursor-pointer"
-               >
-                 <Settings className="w-4 h-4 block group-hover:hidden" />
-                 <Edit className="w-4 h-4 hidden group-hover:block" />
-                 <span>Chỉnh sửa hồ sơ</span>
-               </button>
+               <RollingActionButton
+                 label="Chỉnh sửa hồ sơ"
+                 onClick={() => router.push('/settings')}
+               />
             ) : (
                <>
                   {profileData.friendshipStatus === "ACCEPTED" ? (

@@ -22,6 +22,10 @@ class QuizAnswerSelected extends QuizEvent {
   });
 }
 
+class QuizNextQuestionRequested extends QuizEvent {
+  const QuizNextQuestionRequested();
+}
+
 class QuizSubmitRequested extends QuizEvent {
   final String? videoTitle;
   final String? channelName;

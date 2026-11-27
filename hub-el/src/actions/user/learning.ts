@@ -292,15 +292,54 @@ export async function getPlaylistProgressAction(userId: string, playlistId: stri
   } catch (error: any) { return { success: false, error: error.message }; }
 }
 
+export async function getVideoProgressAction(userId: string, youtubeStringId: string) {
+  try {
+    if (!userId || !youtubeStringId) {
+      return { success: false, lastWatched: 0, duration: 0, isCompleted: false };
+    }
+
+    const videoRecord = await prisma.video.findFirst({
+      where: { youtubeUrl: youtubeStringId },
+      select: { id: true, duration: true },
+    });
+
+    if (!videoRecord) {
+      return { success: true, lastWatched: 0, duration: 0, isCompleted: false };
+    }
+
+    const progress = await prisma.userProgress.findUnique({
+      where: { userId_videoId: { userId, videoId: videoRecord.id } },
+      select: { lastWatched: true, isCompleted: true },
+    });
+
+    return {
+      success: true,
+      lastWatched: progress?.lastWatched || 0,
+      duration: videoRecord.duration || 0,
+      isCompleted: progress?.isCompleted || false,
+    };
+  } catch {
+    return { success: false, lastWatched: 0, duration: 0, isCompleted: false };
+  }
+}
+
 /**
- * Đánh dấu hoàn thành video và cộng tiến độ nhiệm vụ xem video
+ * Đánh dấu hoàn thành video (khi xem đủ >= 50%), thưởng 50 Xu & 50 EXP (lần đầu) và cộng tiến độ nhiệm vụ xem video
  */
 export async function markVideoCompletedAction(userId: string, youtubeStringId: string) {
   try {
-    if (!userId || !youtubeStringId) return { success: false };
+    if (!userId || !youtubeStringId) return { success: false, xpDelta: 0, coinsDelta: 0 };
 
     const videoRecord = await prisma.video.findFirst({ where: { youtubeUrl: youtubeStringId } });
+    let isFirstCompletion = false;
+
     if (videoRecord) {
+      const existingProgress = await prisma.userProgress.findUnique({
+        where: { userId_videoId: { userId, videoId: videoRecord.id } },
+      });
+
+      isFirstCompletion = !existingProgress?.isCompleted;
+
       await prisma.userProgress.upsert({
         where: { userId_videoId: { userId, videoId: videoRecord.id } },
         update: { isCompleted: true, updatedAt: new Date() },
@@ -308,21 +347,41 @@ export async function markVideoCompletedAction(userId: string, youtubeStringId: 
       });
     }
 
-    const now = new Date();
-    const startOfToday = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+    let xpDelta = 0;
+    let coinsDelta = 0;
 
-    const watchTask = await prisma.userTaskProgress.findFirst({
+    // Chỉ thưởng 50 Xu & 50 EXP + cộng nhiệm vụ nếu đây là lần đầu hoàn thành video này
+    if (isFirstCompletion) {
+      xpDelta = 50;
+      coinsDelta = 50;
+
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          xp: { increment: xpDelta },
+          freeCoins: { increment: coinsDelta },
+        },
+      });
+
+      const now = new Date();
+      const startOfToday = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+
+      const watchTask = await prisma.userTaskProgress.findFirst({
         where: { userId, assignedDate: { gte: startOfToday }, isClaimed: false, task: { taskType: "WATCH_VIDEO" } },
         include: { task: true }
-    });
+      });
 
-    if (watchTask && watchTask.current < watchTask.task.target) {
+      if (watchTask && watchTask.current < watchTask.task.target) {
         await prisma.userTaskProgress.update({
-            where: { id: watchTask.id }, data: { current: watchTask.current + 1 }
+          where: { id: watchTask.id }, data: { current: watchTask.current + 1 }
         });
+      }
     }
-    return { success: true };
-  } catch (error) { return { success: false }; }
+
+    return { success: true, xpDelta, coinsDelta, alreadyCompleted: !isFirstCompletion };
+  } catch (error) {
+    return { success: false, xpDelta: 0, coinsDelta: 0 };
+  }
 }
 
 /**

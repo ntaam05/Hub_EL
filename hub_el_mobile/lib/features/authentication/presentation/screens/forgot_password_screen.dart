@@ -5,8 +5,8 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
+import '../../../../shared/widgets/lucian_widgets.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -26,6 +26,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   int _step = 1; // 1: Email, 2: OTP + New Password
   int _countdown = 0;
+  int _shakeTrigger = 0;
   Timer? _timer;
 
   @override
@@ -53,6 +54,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   void _handleSendOtp() {
     final email = _emailController.text.trim();
     if (email.isEmpty || !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
+      setState(() => _shakeTrigger++);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Vui lòng nhập Email hợp lệ!'),
@@ -129,6 +131,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           child: BlocConsumer<AuthBloc, AuthState>(
             listener: (context, state) {
               if (state is AuthFailure) {
+                setState(() => _shakeTrigger++);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(state.message),
@@ -159,9 +162,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             },
             builder: (context, state) {
               final isLoading = state is AuthLoading;
+              final btnState = state is AuthPasswordResetSuccess
+                  ? LucianButtonState.ok
+                  : isLoading
+                      ? LucianButtonState.busy
+                      : LucianButtonState.idle;
 
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+              return LucianShakeBox(
+                shakeTrigger: _shakeTrigger,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Icon(
                     LucideIcons.keyRound,
@@ -198,10 +208,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       keyboardType: TextInputType.emailAddress,
                     ),
                     AppSpacing.gapV24,
-                    CustomButton(
-                      text: 'GỬI MÃ OTP',
-                      variant: ButtonVariant.primary,
-                      isLoading: isLoading,
+                    LucianPrimaryButton(
+                      label: 'GỬI MÃ OTP',
+                      state: isLoading
+                          ? LucianButtonState.busy
+                          : LucianButtonState.idle,
                       onPressed: isLoading ? null : _handleSendOtp,
                     ),
                   ] else ...[
@@ -253,14 +264,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       ],
                     ),
                     AppSpacing.gapV20,
-                    CustomButton(
-                      text: 'ĐẶT LẠI MẬT KHẨU',
-                      variant: ButtonVariant.gradient,
-                      isLoading: isLoading,
+                    LucianPrimaryButton(
+                      label: 'ĐẶT LẠI MẬT KHẨU',
+                      state: btnState,
                       onPressed: isLoading ? null : _handleResetPassword,
                     ),
                   ],
                 ],
+                ),
               );
             },
           ),

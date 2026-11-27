@@ -22,6 +22,7 @@ class UserModel extends UserEntity {
     super.currentStreak = 0,
     super.highestStreak = 0,
     super.streakFreezes = 0,
+    super.lastStudyDate,
     super.targetLanguage = 'en',
     super.languageLevel = 'A2',
   });
@@ -47,6 +48,7 @@ class UserModel extends UserEntity {
       currentStreak: json['currentStreak'] is int ? json['currentStreak'] : int.tryParse(json['currentStreak']?.toString() ?? '0') ?? 0,
       highestStreak: json['highestStreak'] is int ? json['highestStreak'] : int.tryParse(json['highestStreak']?.toString() ?? '0') ?? 0,
       streakFreezes: json['streakFreezes'] is int ? json['streakFreezes'] : int.tryParse(json['streakFreezes']?.toString() ?? '0') ?? 0,
+      lastStudyDate: json['lastStudyDate'] != null ? DateTime.tryParse(json['lastStudyDate'].toString()) : null,
       targetLanguage: json['targetLanguage']?.toString() ?? 'en',
       languageLevel: json['languageLevel']?.toString() ?? 'A2',
     );
@@ -72,6 +74,8 @@ class UserModel extends UserEntity {
       'isPro': isPro,
       'currentStreak': currentStreak,
       'highestStreak': highestStreak,
+      'streakFreezes': streakFreezes,
+      'lastStudyDate': lastStudyDate?.toIso8601String(),
       'targetLanguage': targetLanguage,
       'languageLevel': languageLevel,
     };

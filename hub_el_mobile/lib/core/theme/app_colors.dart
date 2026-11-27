@@ -4,19 +4,22 @@ import 'package:flutter/material.dart';
 /// và DESIGN_SYSTEM.md của website.
 abstract class AppColors {
   // ==========================================
-  // 1. BRAND COLORS (MÀU THƯƠNG HIỆU)
+  // 1. BRAND COLORS (LUCIAN UX/UI TOKENS)
   // ==========================================
-  static const Color primary = Color(0xFF2563EB); // Blue 600
-  static const Color primaryLight = Color(0xFF3B82F6); // Blue 500
-  static const Color primaryDark = Color(0xFF1D4ED8); // Blue 700
+  static const Color primary = Color(0xFF6A57F2); // --ux-accent (light)
+  static const Color primaryLight = Color(0xFFB7A4FF); // --ux-accent (dark)
+  static const Color primaryDark = Color(0xFF5542E0);
 
-  static const Color secondary = Color(0xFF9333EA); // Purple 600
-  static const Color secondaryLight = Color(0xFFA855F7); // Purple 500
-  static const Color secondaryDark = Color(0xFF7E22CE); // Purple 700
+  static const Color secondary = Color(0xFF2F8FE0); // --ux-accent-2 (light)
+  static const Color secondaryLight = Color(0xFF7DB4FF); // --ux-accent-2 (dark)
+  static const Color secondaryDark = Color(0xFF1D74C2);
 
-  // Gradients thương hiệu đặc trưng của Hub-EL
+  static const Color mintLight = Color(0xFF119C72); // --ux-mint (light)
+  static const Color mintDark = Color(0xFF7EE8C0); // --ux-mint (dark)
+
+  // Gradients thương hiệu
   static const LinearGradient primaryGradient = LinearGradient(
-    colors: [Color(0xFF3B82F6), Color(0xFF9333EA)],
+    colors: [Color(0xFF7B61FF), Color(0xFF3D8BFF), Color(0xFF1FB89A)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
@@ -97,54 +100,53 @@ abstract class AppColors {
   // ==========================================
   // 4. FUNCTIONAL / FEEDBACK COLORS
   // ==========================================
-  static const Color success = Color(0xFF10B981); // Emerald 500
+  static const Color success = Color(0xFF119C72); // --ux-mint
   static const Color successLight = Color(0xFFECFDF5);
   static const Color successBorder = Color(0xFFA7F3D0);
 
-  static const Color error = Color(0xFFEF4444); // Red 500
+  static const Color error = Color(0xFFD93A55); // --ux-danger
   static const Color errorLight = Color(0xFFFEF2F2);
   static const Color errorBorder = Color(0xFFFECACA);
 
-  static const Color warning = Color(0xFFF59E0B); // Amber 500
+  static const Color warning = Color(0xFFD6731E); // --ux-warn
   static const Color warningLight = Color(0xFFFFFBEB);
   static const Color warningBorder = Color(0xFFFDE68A);
 
-  static const Color info = Color(0xFF3B82F6); // Blue 500
+  static const Color info = Color(0xFF2F8FE0); // --ux-accent-2
   static const Color infoLight = Color(0xFFEFF6FF);
   static const Color infoBorder = Color(0xFFBFDBFE);
 
   // ==========================================
-  // 5. LIGHT THEME TOKENS
+  // 5. LIGHT THEME TOKENS (--ux-*)
   // ==========================================
-  static const Color lightBackground = Color(0xFFF8FAFC); // slate-50
-  static const Color lightSurface = Color(0xFFFFFFFF); // white
-  static const Color lightCard = Color(0xFFFFFFFF);
-  static const Color lightBorder = Color(0xFFE2E8F0); // slate-200
-  static const Color lightDivider = Color(0xFFE2E8F0);
-  static const Color lightInputFill = Color(0xFFF1F5F9); // slate-100
+  static const Color lightBackground = Color(0xFFF4F2EE); // --ux-page
+  static const Color lightSurface = Color(0xFFFFFFFF); // --ux-surface
+  static const Color lightCard = Color(0xFFFFFFFF); // --ux-surface
+  static const Color lightBorder = Color(0x1716151B); // --ux-line (~9%)
+  static const Color lightDivider = Color(0x1716151B);
+  static const Color lightInputFill = Color(0xFFF5F3EF); // --ux-surface-2
 
-  static const Color lightTextPrimary = Color(0xFF0F172A); // slate-900
-  static const Color lightTextSecondary = Color(0xFF64748B); // slate-500
-  static const Color lightTextMuted = Color(0xFF94A3B8); // slate-400
+  static const Color lightTextPrimary = Color(0xFF16151B); // --ux-ink
+  static const Color lightTextSecondary = Color(0xFF57535F); // --ux-ink-2
+  static const Color lightTextMuted = Color(0xFF8E8A97); // --ux-ink-3
 
   // ==========================================
-  // 6. DARK THEME TOKENS
+  // 6. DARK THEME TOKENS (--ux-*)
   // ==========================================
-  static const Color darkBackground = Color(0xFF020617); // Đổi thành màu vũ trụ sâu #020617 theo Mobile Web
-  static const Color darkSurface = Color(0xFF0F172A); // Header, Bottom Nav #0F172A
-  static const Color darkCard = Color(0xFF151821); // Card nền kính mờ #151821
-  static const Color darkBorder = Color(0x80334155); // Viền slate-700/50
-  static const Color darkDivider = Color(0x1FFFFFFF); // White 12%
-  static const Color darkInputFill = Color(0xFF1E293B);
+  static const Color darkBackground = Color(0xFF07080D); // --ux-page
+  static const Color darkSurface = Color(0xFF13141C); // --ux-surface
+  static const Color darkCard = Color(0xFF13141C); // --ux-surface
+  static const Color darkBorder = Color(0x14FFFFFF); // --ux-line (8%)
+  static const Color darkDivider = Color(0x14FFFFFF);
+  static const Color darkInputFill = Color(0xFF1A1B25); // --ux-surface-2
 
-  // Không gian vũ trụ chuyên biệt cho Hub-EL Mobile Web
-  static const Color spaceDarkBackground = Color(0xFF020617);
-  static const Color spaceSurface = Color(0xFF0F172A);
-  static const Color spaceCard = Color(0xFF151821);
-  static const Color spaceCardBorder = Color(0x80334155);
+  static const Color spaceDarkBackground = Color(0xFF07080D);
+  static const Color spaceSurface = Color(0xFF13141C);
+  static const Color spaceCard = Color(0xFF1A1B25);
+  static const Color spaceCardBorder = Color(0x14FFFFFF);
 
-  static const Color darkTextPrimary = Color(0xFFF8FAFC); // slate-50
-  static const Color darkTextSecondary = Color(0xFF94A3B8); // slate-400
-  static const Color darkTextMuted = Color(0xFF64748B); // slate-500
+  static const Color darkTextPrimary = Color(0xFFF4F0E8); // --ux-ink
+  static const Color darkTextSecondary = Color(0xADF4F0E8); // --ux-ink-2 (68%)
+  static const Color darkTextMuted = Color(0x6BF4F0E8); // --ux-ink-3 (42%)
 }
 

@@ -3,6 +3,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../shared/widgets/lucian_widgets.dart';
 import '../../data/models/course_model.dart';
 import 'playlist_screen.dart';
 
@@ -64,8 +65,9 @@ class _CoursesScreenState extends State<CoursesScreen> {
     final inProgress = total - completed;
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.darkBackground : const Color(0xFFF8FAFC),
-      body: RefreshIndicator(
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
+      body: LucianMeteorBackground(
+        child: RefreshIndicator(
         onRefresh: _loadCourses,
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -294,6 +296,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
 
             const SliverToBoxAdapter(child: SizedBox(height: 96)),
           ],
+        ),
         ),
       ),
     );

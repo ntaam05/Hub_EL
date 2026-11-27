@@ -8,6 +8,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/avatar_image_helper.dart';
+import '../../../../shared/widgets/lucian_widgets.dart';
 import '../../../authentication/presentation/bloc/auth_bloc.dart';
 import '../../../authentication/presentation/bloc/auth_event.dart';
 import '../cubit/profile_cubit.dart';
@@ -146,8 +147,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ],
       ),
-      body: BlocConsumer<ProfileCubit, ProfileState>(
+      body: LucianMeteorBackground(
+        child: BlocConsumer<ProfileCubit, ProfileState>(
         listener: (context, state) {
+          if (state.status == ProfileStatus.loaded && state.profile != null) {
+            final p = state.profile!;
+            try {
+              context.read<AuthBloc>().add(AuthUserProfileUpdated(
+                fullName: p.fullName,
+                username: p.username,
+                image: p.displayAvatar,
+                avatar: p.displayAvatar,
+              ));
+            } catch (_) {}
+          }
           if (state.errorMessage != null && state.status == ProfileStatus.error) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -539,15 +552,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       child: Column(
                         children: [
-                          _buildActionRow(
+                          LucianPrimaryButton(
+                            label: 'Chỉnh sửa hồ sơ',
                             icon: LucideIcons.userCheck,
-                            color: Colors.blueAccent,
-                            title: 'Chỉnh sửa thông tin cá nhân',
-                            subtitle: 'Họ tên, biệt danh, tiểu sử, sở thích',
-                            onTap: _openEditProfileDialog,
-                            isDark: isDark,
+                            height: 46,
+                            onPressed: _openEditProfileDialog,
                           ),
-                          const Divider(height: 16),
+                          const Divider(height: 20),
                           _buildActionRow(
                             icon: LucideIcons.shieldCheck,
                             color: const Color(0xFF10B981),
@@ -582,6 +593,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           );
         },
+        ),
       ),
     );
   }

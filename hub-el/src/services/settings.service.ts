@@ -160,6 +160,15 @@ export async function updatePersonalProfileService(
       },
     });
 
+    if ((global as any).__socketIo) {
+      (global as any).__socketIo.to(userId).emit("profile_updated", {
+        userId,
+        name: updated.name,
+        fullName: updated.fullName,
+        username: updated.username,
+      });
+    }
+
     return {
       success: true,
       message: "Cập nhật hồ sơ thành công!",
@@ -206,6 +215,14 @@ export async function updateAvatarService(userId: string, imageString: string) {
       where: { id: userId },
       data: { image: trimmed },
     });
+
+    if ((global as any).__socketIo) {
+      (global as any).__socketIo.to(userId).emit("profile_updated", {
+        userId,
+        image: trimmed,
+        avatar: trimmed,
+      });
+    }
 
     return {
       success: true,

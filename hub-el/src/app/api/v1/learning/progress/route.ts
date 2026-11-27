@@ -148,9 +148,15 @@ export async function POST(req: Request) {
       );
     }
 
-    // 2. Nếu người dùng xem hết video hoặc yêu cầu đánh dấu hoàn thành
+    // 2. Nếu người dùng xem đủ 50% video hoặc yêu cầu đánh dấu hoàn thành
+    let xpDelta = 0;
+    let coinsDelta = 0;
     if (markCompleted) {
-      await markVideoCompletedAction(userId!, videoId);
+      const completeRes: any = await markVideoCompletedAction(userId!, videoId);
+      if (completeRes?.success) {
+        xpDelta = completeRes.xpDelta || 0;
+        coinsDelta = completeRes.coinsDelta || 0;
+      }
     }
 
     return NextResponse.json({
@@ -160,6 +166,8 @@ export async function POST(req: Request) {
         lastWatched: lastWatchedSeconds,
         isCompleted: markCompleted,
         synced: true,
+        xpDelta,
+        coinsDelta,
       },
     });
   } catch (error: any) {

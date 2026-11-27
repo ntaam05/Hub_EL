@@ -27,12 +27,11 @@ class ContinueLearningCard extends StatelessWidget {
             const Icon(LucideIcons.playCircle, size: 18, color: AppColors.primaryLight),
             AppSpacing.gapH8,
             Text(
-              'TIẾP TỤC HỌC',
+              'Tiếp tục học',
               style: AppTextStyles.h3.copyWith(
-                fontSize: 13,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 1.2,
-                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
               ),
             ),
           ],
@@ -43,19 +42,12 @@ class ContinueLearningCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.spaceCard : Colors.white,
-              borderRadius: BorderRadius.circular(32),
+              color: isDark ? AppColors.darkCard : Colors.white,
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: isDark ? AppColors.spaceCardBorder : Colors.grey.shade200,
+                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
                 width: 1,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
-                  blurRadius: 25,
-                  offset: const Offset(0, 8),
-                ),
-              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -104,11 +96,10 @@ class ContinueLearningCard extends StatelessWidget {
 
                 // Tên chuyên mục / Khóa học
                 Text(
-                  continueLearning!.course.toUpperCase(),
+                  continueLearning!.course,
                   style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.2,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
                     color: AppColors.primaryLight,
                   ),
                 ),
@@ -174,17 +165,17 @@ class ContinueLearningCard extends StatelessWidget {
                     ),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isDark ? Colors.white : const Color(0xFF0F172A),
-                        foregroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        elevation: 4,
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        elevation: 0,
                       ),
                       onPressed: onStartLearning,
-                      icon: const Icon(LucideIcons.playCircle, size: 18),
+                      icon: const Icon(LucideIcons.playCircle, size: 17),
                       label: const Text(
                         'Vào học',
-                        style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
                       ),
                     ),
                   ],

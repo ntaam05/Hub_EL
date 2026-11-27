@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -9,6 +10,8 @@ import '../../core/utils/avatar_image_helper.dart';
 import '../../features/authentication/domain/entities/user_entity.dart';
 import '../../features/authentication/presentation/bloc/auth_bloc.dart';
 import '../../features/authentication/presentation/bloc/auth_event.dart';
+import '../../features/learning/domain/repositories/learning_repository.dart';
+import 'search_suggestions_list.dart';
 import '../../features/wiki/presentation/screens/wiki_manager_screen.dart';
 import '../../features/gacha/presentation/screens/gacha_screen.dart';
 import '../../features/store/presentation/screens/store_screen.dart';
@@ -42,14 +45,87 @@ class MobileHeaderBar extends StatefulWidget implements PreferredSizeWidget {
 
 class _MobileHeaderBarState extends State<MobileHeaderBar> {
   bool _isSearchOpen = false;
+  bool _isLinkOpen = false;
   final _searchController = TextEditingController();
   final _linkController = TextEditingController();
+  OverlayEntry? _suggestionsOverlay;
+  List<String> _searchHistory = [];
+  List<String> _searchSuggestions = [];
+  Timer? _suggestDebounce;
 
   @override
   void dispose() {
+    _removeSuggestionsOverlay();
+    _suggestDebounce?.cancel();
     _searchController.dispose();
     _linkController.dispose();
     super.dispose();
+  }
+
+  void _removeSuggestionsOverlay() {
+    _suggestionsOverlay?.remove();
+    _suggestionsOverlay = null;
+  }
+
+  void _showOrUpdateSuggestionsOverlay() {
+    if (!_isSearchOpen || (_searchHistory.isEmpty && _searchSuggestions.isEmpty)) {
+      _removeSuggestionsOverlay();
+      return;
+    }
+
+    if (_suggestionsOverlay != null) {
+      _suggestionsOverlay!.markNeedsBuild();
+      return;
+    }
+
+    final overlay = Overlay.maybeOf(context);
+    if (overlay == null) return;
+
+    final topOffset = MediaQuery.of(context).padding.top + widget.preferredSize.height + 4;
+
+    _suggestionsOverlay = OverlayEntry(
+      builder: (ctx) => Positioned(
+        top: topOffset,
+        left: 12,
+        right: 12,
+        child: Material(
+          color: Colors.transparent,
+          child: SearchSuggestionsList(
+            history: _searchHistory,
+            suggestions: _searchSuggestions,
+            onSelected: (term) {
+              _searchController.text = term;
+              _removeSuggestionsOverlay();
+              setState(() => _isSearchOpen = false);
+              widget.onSearchSubmitted?.call(term);
+            },
+          ),
+        ),
+      ),
+    );
+    overlay.insert(_suggestionsOverlay!);
+  }
+
+  Future<void> _fetchHeaderSuggestions(String query) async {
+    try {
+      final repo = context.read<ILearningRepository>();
+      final res = await repo.getSearchSuggestions(query);
+      if (mounted && _isSearchOpen) {
+        setState(() {
+          _searchHistory = res.history;
+          _searchSuggestions = res.suggestions;
+        });
+        _showOrUpdateSuggestionsOverlay();
+      }
+    } catch (_) {}
+  }
+
+  void _onHeaderSearchChanged(String val) {
+    _suggestDebounce?.cancel();
+    _suggestDebounce = Timer(
+      Duration(milliseconds: val.trim().isEmpty ? 0 : 220),
+      () => _fetchHeaderSuggestions(val),
+    );
   }
 
   void _openProfileMenu(BuildContext context) {
@@ -182,6 +258,7 @@ class _MobileHeaderBarState extends State<MobileHeaderBar> {
                   icon: LucideIcons.brainCircuit,
                   color: Colors.purpleAccent,
                   title: 'Wiki Tri Thức & Bài Học',
+                  isDark: isDark,
                   onTap: () {
                     Navigator.of(ctx).pop();
                     Navigator.of(context).push(
@@ -195,6 +272,7 @@ class _MobileHeaderBarState extends State<MobileHeaderBar> {
                   icon: LucideIcons.sparkles,
                   color: const Color(0xFF38BDF8),
                   title: 'Cầu Nguyện Tri Thức (Gacha)',
+                  isDark: isDark,
                   onTap: () {
                     Navigator.of(ctx).pop();
                     Navigator.of(context).push(
@@ -208,6 +286,7 @@ class _MobileHeaderBarState extends State<MobileHeaderBar> {
                   icon: LucideIcons.bookMarked,
                   color: Colors.blueAccent,
                   title: 'Kho Từ Vựng',
+                  isDark: isDark,
                   onTap: () {
                     Navigator.of(ctx).pop();
                     Navigator.of(context).push(
@@ -221,6 +300,7 @@ class _MobileHeaderBarState extends State<MobileHeaderBar> {
                   icon: LucideIcons.award,
                   color: Colors.amberAccent,
                   title: 'Thành Tựu & Huy Hiệu',
+                  isDark: isDark,
                   onTap: () {
                     Navigator.of(ctx).pop();
                     Navigator.of(context).push(
@@ -234,6 +314,7 @@ class _MobileHeaderBarState extends State<MobileHeaderBar> {
                   icon: LucideIcons.barChart2,
                   color: Colors.indigoAccent,
                   title: 'Thống Kê Học Tập',
+                  isDark: isDark,
                   onTap: () {
                     Navigator.of(ctx).pop();
                     StatsDialog.show(context, user: widget.user);
@@ -243,6 +324,7 @@ class _MobileHeaderBarState extends State<MobileHeaderBar> {
                   icon: LucideIcons.shoppingCart,
                   color: AppColors.success,
                   title: 'Cửa Hàng Vật Phẩm',
+                  isDark: isDark,
                   onTap: () {
                     Navigator.of(ctx).pop();
                     Navigator.of(context).push(
@@ -257,6 +339,7 @@ class _MobileHeaderBarState extends State<MobileHeaderBar> {
                   icon: LucideIcons.user,
                   color: Colors.cyanAccent,
                   title: 'Hồ Sơ Cá Nhân',
+                  isDark: isDark,
                   onTap: () {
                     Navigator.of(ctx).pop();
                     Navigator.of(context).push(
@@ -272,6 +355,7 @@ class _MobileHeaderBarState extends State<MobileHeaderBar> {
                   color: AppColors.error,
                   title: 'Đăng Xuất',
                   textColor: AppColors.error,
+                  isDark: isDark,
                   onTap: () {
                     Navigator.of(ctx).pop();
                     context.read<AuthBloc>().add(const AuthLogoutRequested());
@@ -370,7 +454,9 @@ class _MobileHeaderBarState extends State<MobileHeaderBar> {
           ),
           child: SafeArea(
             bottom: false,
-            child: _isSearchOpen ? _buildSearchOverlay(isDark) : _buildStandardHeader(isDark),
+            child: _isSearchOpen
+                ? _buildSearchOverlay(isDark)
+                : (_isLinkOpen ? _buildLinkOverlay(isDark) : _buildStandardHeader(isDark)),
           ),
         ),
       ),
@@ -391,29 +477,32 @@ class _MobileHeaderBarState extends State<MobileHeaderBar> {
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    gradient: AppColors.primaryGradient,
-                    borderRadius: BorderRadius.circular(10),
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(LucideIcons.graduationCap, color: Colors.white, size: 18),
+                  child: const Icon(LucideIcons.graduationCap, color: Colors.white, size: 17),
                 ),
                 if (showBrandText) ...[
                   AppSpacing.gapH6,
-                  ShaderMask(
-                    shaderCallback: (bounds) => AppColors.primaryGradient.createShader(bounds),
-                    child: const Text(
-                      'Hub-EL',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 18,
-                        letterSpacing: -0.5,
-                      ),
+                  Text(
+                    'Hub-EL',
+                    style: TextStyle(
+                      color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 17,
+                      letterSpacing: -0.3,
                     ),
                   ),
                 ],
                 const SizedBox(width: 6),
                 InkWell(
-                  onTap: () => setState(() => _isSearchOpen = true),
+                  onTap: () {
+                    setState(() {
+                      _isSearchOpen = true;
+                      _isLinkOpen = false;
+                    });
+                    _fetchHeaderSuggestions(_searchController.text);
+                  },
                   borderRadius: BorderRadius.circular(999),
                   child: Container(
                     padding: const EdgeInsets.all(6),
@@ -425,6 +514,26 @@ class _MobileHeaderBarState extends State<MobileHeaderBar> {
                       LucideIcons.search,
                       size: 15,
                       color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                InkWell(
+                  onTap: () => setState(() {
+                    _isLinkOpen = true;
+                    _isSearchOpen = false;
+                  }),
+                  borderRadius: BorderRadius.circular(999),
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      LucideIcons.link,
+                      size: 15,
+                      color: Colors.redAccent,
                     ),
                   ),
                 ),
@@ -448,13 +557,15 @@ class _MobileHeaderBarState extends State<MobileHeaderBar> {
                     ResourcePill(
                       type: ResourcePillType.streak,
                       value: '${widget.user.currentStreak}',
+                      isActive: widget.user.isStudiedToday,
                       onTap: () {
                         // Kích hoạt đồng bộ trạng thái mới nhất từ server
-                        context.read<AuthBloc>().add(const AuthCheckRequested());
+                        context.read<AuthBloc>().add(const AuthUserRefreshed());
                         StreakDialog.show(
                           context,
                           streak: widget.user.currentStreak,
                           streakFreezes: widget.user.streakFreezes,
+                          isStudiedToday: widget.user.isStudiedToday,
                         );
                       },
                     ),
@@ -548,6 +659,66 @@ class _MobileHeaderBarState extends State<MobileHeaderBar> {
   }
 
   Widget _buildSearchOverlay(bool isDark) {
+    final accent = isDark ? AppColors.primaryLight : AppColors.primary;
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            height: 40,
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkInputFill : Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: accent, width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: accent.withValues(alpha: 0.16),
+                  blurRadius: 0,
+                  spreadRadius: 3.5,
+                ),
+              ],
+            ),
+            child: TextField(
+              controller: _searchController,
+              autofocus: true,
+              textInputAction: TextInputAction.search,
+              onChanged: _onHeaderSearchChanged,
+              onSubmitted: (val) {
+                if (val.trim().isNotEmpty) {
+                  _removeSuggestionsOverlay();
+                  widget.onSearchSubmitted?.call(val.trim());
+                  setState(() => _isSearchOpen = false);
+                }
+              },
+              style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w500),
+              decoration: InputDecoration(
+                hintText: 'Tìm kiếm khóa học, video...',
+                hintStyle: TextStyle(
+                  fontSize: 13.5,
+                  color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                ),
+                prefixIcon: Icon(LucideIcons.search, size: 16, color: accent),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                filled: false,
+              ),
+            ),
+          ),
+        ),
+        AppSpacing.gapH8,
+        IconButton(
+          icon: const Icon(LucideIcons.x, size: 20),
+          onPressed: () {
+            _removeSuggestionsOverlay();
+            setState(() => _isSearchOpen = false);
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLinkOverlay(bool isDark) {
     return Row(
       children: [
         Expanded(
@@ -557,23 +728,24 @@ class _MobileHeaderBarState extends State<MobileHeaderBar> {
               SizedBox(
                 height: 36,
                 child: TextField(
-                  controller: _searchController,
+                  controller: _linkController,
                   autofocus: true,
-                  textInputAction: TextInputAction.search,
+                  textInputAction: TextInputAction.go,
                   onSubmitted: (val) {
                     if (val.trim().isNotEmpty) {
-                      widget.onSearchSubmitted?.call(val.trim());
-                      setState(() => _isSearchOpen = false);
+                      widget.onPlayLinkSubmitted?.call(val.trim());
+                      _linkController.clear();
+                      setState(() => _isLinkOpen = false);
                     }
                   },
                   style: const TextStyle(fontSize: 13),
                   decoration: InputDecoration(
-                    hintText: 'Tìm kiếm khóa học...',
+                    hintText: 'Dán link YouTube để học ngay...',
                     hintStyle: TextStyle(
                       fontSize: 13,
                       color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
                     ),
-                    prefixIcon: const Icon(LucideIcons.search, size: 16),
+                    prefixIcon: const Icon(LucideIcons.playCircle, size: 16, color: Colors.redAccent),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                     filled: true,
                     fillColor: isDark ? AppColors.darkInputFill : Colors.grey.shade100,
@@ -587,10 +759,21 @@ class _MobileHeaderBarState extends State<MobileHeaderBar> {
             ],
           ),
         ),
-        AppSpacing.gapH8,
+        AppSpacing.gapH6,
+        TextButton(
+          onPressed: () {
+            final link = _linkController.text.trim();
+            if (link.isNotEmpty) {
+              widget.onPlayLinkSubmitted?.call(link);
+              _linkController.clear();
+              setState(() => _isLinkOpen = false);
+            }
+          },
+          child: const Text('Mở', style: TextStyle(fontWeight: FontWeight.bold)),
+        ),
         IconButton(
           icon: const Icon(LucideIcons.x, size: 20),
-          onPressed: () => setState(() => _isSearchOpen = false),
+          onPressed: () => setState(() => _isLinkOpen = false),
         ),
       ],
     );

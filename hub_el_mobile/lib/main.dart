@@ -4,6 +4,7 @@ import 'core/constants/app_environment.dart';
 import 'core/network/dio_client.dart';
 import 'core/storage/token_storage_service.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/theme_cubit.dart';
 import 'features/authentication/data/datasources/auth_remote_data_source.dart';
 import 'features/authentication/data/repositories/auth_repository_impl.dart';
 import 'features/authentication/domain/usecases/check_auth_status_usecase.dart';
@@ -25,6 +26,7 @@ import 'features/dashboard/presentation/bloc/dashboard_bloc.dart';
 import 'features/dashboard/presentation/screens/main_shell_screen.dart';
 import 'features/learning/data/datasources/learning_remote_data_source.dart';
 import 'features/learning/data/repositories/learning_repository_impl.dart';
+import 'features/learning/domain/repositories/learning_repository.dart';
 import 'features/learning/domain/usecases/check_video_link_usecase.dart';
 import 'features/learning/domain/usecases/generate_quiz_usecase.dart';
 import 'features/learning/domain/usecases/submit_quiz_usecase.dart';
@@ -253,7 +255,11 @@ void main() {
     getInterestTagsUseCase: GetInterestTagsUseCase(settingsRepository),
   );
 
+  final themeCubit = ThemeCubit();
+  themeCubit.loadTheme();
+
   runApp(HubElApp(
+    themeCubit: themeCubit,
     authBloc: authBloc,
     dashboardBloc: dashboardBloc,
     searchBloc: searchBloc,
@@ -269,6 +275,7 @@ void main() {
     profileCubit: profileCubit,
     settingsCubit: settingsCubit,
     checkVideoLinkUseCase: checkVideoLinkUseCase,
+    learningRepository: learningRepository,
     wikiRepository: wikiRepository,
     gachaRepository: gachaRepository,
     friendsRepository: friendsRepository,
@@ -279,6 +286,7 @@ void main() {
     vocabularyRepository: vocabularyRepository,
     profileRepository: profileRepository,
     settingsRepository: settingsRepository,
+    chatSocketService: chatSocketService,
   ));
 }
 
@@ -298,6 +306,7 @@ class HubElApp extends StatelessWidget {
   final ProfileCubit? profileCubit;
   final SettingsCubit? settingsCubit;
   final CheckVideoLinkUseCase checkVideoLinkUseCase;
+  final ILearningRepository? learningRepository;
   final IWikiRepository? wikiRepository;
   final IGachaRepository? gachaRepository;
   final IFriendsRepository? friendsRepository;
@@ -308,6 +317,8 @@ class HubElApp extends StatelessWidget {
   final IVocabularyRepository? vocabularyRepository;
   final ProfileRepository? profileRepository;
   final SettingsRepository? settingsRepository;
+  final ChatSocketService? chatSocketService;
+  final ThemeCubit? themeCubit;
 
   const HubElApp({
     super.key,
@@ -326,6 +337,7 @@ class HubElApp extends StatelessWidget {
     this.profileCubit,
     this.settingsCubit,
     required this.checkVideoLinkUseCase,
+    this.learningRepository,
     this.wikiRepository,
     this.gachaRepository,
     this.friendsRepository,
@@ -336,6 +348,8 @@ class HubElApp extends StatelessWidget {
     this.vocabularyRepository,
     this.profileRepository,
     this.settingsRepository,
+    this.chatSocketService,
+    this.themeCubit,
   });
 
   @override
@@ -343,6 +357,8 @@ class HubElApp extends StatelessWidget {
     return MultiRepositoryProvider(
       providers: [
         RepositoryProvider.value(value: checkVideoLinkUseCase),
+        if (learningRepository != null)
+          RepositoryProvider<ILearningRepository>.value(value: learningRepository!),
         if (wikiRepository != null)
           RepositoryProvider<IWikiRepository>.value(value: wikiRepository!),
         if (gachaRepository != null)
@@ -363,6 +379,8 @@ class HubElApp extends StatelessWidget {
           RepositoryProvider<ProfileRepository>.value(value: profileRepository!),
         if (settingsRepository != null)
           RepositoryProvider<SettingsRepository>.value(value: settingsRepository!),
+        if (chatSocketService != null)
+          RepositoryProvider<ChatSocketService>.value(value: chatSocketService!),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -388,14 +406,21 @@ class HubElApp extends StatelessWidget {
             BlocProvider.value(value: profileCubit!),
           if (settingsCubit != null)
             BlocProvider.value(value: settingsCubit!),
+          BlocProvider<ThemeCubit>(
+            create: (_) => themeCubit ?? ThemeCubit(),
+          ),
         ],
-        child: MaterialApp(
-          title: 'Hub-EL Mobile',
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          themeMode: ThemeMode.dark, // Khớp với phong cách Dark theme không gian của Website
-          home: const AuthRootNavigator(),
+        child: BlocBuilder<ThemeCubit, ThemeMode>(
+          builder: (context, themeMode) {
+            return MaterialApp(
+              title: 'Hub-EL Mobile',
+              debugShowCheckedModeBanner: false,
+              theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
+              themeMode: themeMode,
+              home: const AuthRootNavigator(),
+            );
+          },
         ),
       ),
     );

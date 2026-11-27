@@ -30,32 +30,20 @@ abstract class AppShadows {
     ),
   ];
 
-  // Ánh sáng tỏa nút bấm Khóa học (Floating CTA Glow)
+  // Đổ bóng trung tính nhẹ cho nút nổi
   static const List<BoxShadow> navCtaGlow = [
     BoxShadow(
-      color: Color(0x663B82F6), // Blue 40%
-      blurRadius: 16,
-      offset: Offset(0, 6),
+      color: Color(0x1F000000),
+      blurRadius: 12,
+      offset: Offset(0, 4),
     ),
   ];
 
-  // Ánh sáng tỏa huy hiệu PRO (Pro Glow)
-  static const List<BoxShadow> proGlow = [
-    BoxShadow(
-      color: Color(0x59EAB308), // Yellow 35%
-      blurRadius: 10,
-      offset: Offset(0, 0),
-    ),
-  ];
+  // Đổ bóng nhẹ cho huy hiệu PRO
+  static const List<BoxShadow> proGlow = soft;
 
-  // Ánh sáng ngọn lửa Streak (Flame Glow)
-  static const List<BoxShadow> streakGlow = [
-    BoxShadow(
-      color: Color(0x4DF97316), // Orange 30%
-      blurRadius: 10,
-      offset: Offset(0, 2),
-    ),
-  ];
+  // Đổ bóng nhẹ cho Streak
+  static const List<BoxShadow> streakGlow = soft;
 
   // Ánh sáng thẻ Wiki theo màu độ hiếm
   static List<BoxShadow> rarityGlow(String rarity) {

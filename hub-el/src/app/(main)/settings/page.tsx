@@ -1,87 +1,182 @@
 "use client";
 
-import React, { useState } from 'react';
-// 🚨 Đã xóa sạch các icon Pointer rườm rà, chỉ giữ lại icon gốc
-import { User, Shield, Bell, EyeOff, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import React, { useState } from "react";
+import {
+  User,
+  Shield,
+  Bell,
+  EyeOff,
+  AlertCircle,
+  CheckCircle2,
+  Settings,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import "../dashboard/lucian-dashboard.css";
 
-// Import 4 Component Tabs
-import ProfileTab from './components/ProfileTab';
-import SecurityTab from './components/SecurityTab';
-import PrivacyTab from './components/PrivacyTab';
-import NotificationsTab from './components/NotificationsTab';
+import ProfileTab from "./components/ProfileTab";
+import SecurityTab from "./components/SecurityTab";
+import PrivacyTab from "./components/PrivacyTab";
+import NotificationsTab from "./components/NotificationsTab";
+
+const METEORS = [
+  { top: "8%", left: "24%", len: "145px", dur: "4.8s", del: "0.2s" },
+  { top: "20%", left: "66%", len: "175px", dur: "5.5s", del: "1.4s" },
+  { top: "46%", left: "44%", len: "155px", dur: "5.1s", del: "0.9s" },
+  { top: "68%", left: "80%", len: "135px", dur: "4.6s", del: "2.3s" },
+];
+
+type SettingsTabId = "profile" | "security" | "privacy" | "notifications";
+
+const TABS: Array<{
+  id: SettingsTabId;
+  label: string;
+  desc: string;
+  icon: React.ElementType;
+}> = [
+  {
+    id: "profile",
+    label: "Thông tin cá nhân",
+    desc: "Ảnh đại diện, tên hiển thị, sở thích",
+    icon: User,
+  },
+  {
+    id: "security",
+    label: "Bảo mật & Đăng nhập",
+    desc: "Mật khẩu, xác thực, xóa tài khoản",
+    icon: Shield,
+  },
+  {
+    id: "privacy",
+    label: "Quyền riêng tư",
+    desc: "Hiển thị hồ sơ và danh sách bạn bè",
+    icon: EyeOff,
+  },
+  {
+    id: "notifications",
+    label: "Thông báo Email",
+    desc: "Nhắc nhở học tập và cập nhật",
+    icon: Bell,
+  },
+];
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'privacy' | 'notifications'>('profile');
+  const [activeTab, setActiveTab] = useState<SettingsTabId>("profile");
 
-  const [notification, setNotification] = useState<{msg: string, type: 'success' | 'error'} | null>(null);
-  const showNotification = (msg: string, type: 'success' | 'error' = 'success') => {
-      setNotification({ msg, type });
-      setTimeout(() => setNotification(null), 3000);
+  const [notification, setNotification] = useState<{
+    msg: string;
+    type: "success" | "error";
+  } | null>(null);
+  const showNotification = (
+    msg: string,
+    type: "success" | "error" = "success"
+  ) => {
+    setNotification({ msg, type });
+    setTimeout(() => setNotification(null), 3000);
   };
 
   return (
-    <div className="min-h-[calc(100vh-80px)] w-full bg-slate-50 dark:bg-[#020617] font-sans text-slate-900 dark:text-slate-100 py-8 px-4 lg:px-12 relative overflow-hidden">
-      
+    <div className="ux dash-bg-gradient relative min-h-[calc(100vh-80px)] w-full overflow-x-hidden">
+      {/* Hiệu ứng sao băng chạy nền */}
+      <div className="dash-meteors" aria-hidden="true">
+        {METEORS.map((m, idx) => (
+          <span
+            key={idx}
+            className="dash-meteor"
+            style={
+              {
+                "--my": m.top,
+                "--mx": m.left,
+                "--mlen": m.len,
+                "--mdur": m.dur,
+                "--mdel": m.del,
+              } as React.CSSProperties
+            }
+          />
+        ))}
+      </div>
+
       {notification && (
-        <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl border bg-white dark:bg-slate-900 border-cyan-500 text-cyan-600 dark:text-cyan-400 animate-in fade-in slide-in-from-top-5">
-          {notification.type === 'success' ? <CheckCircle2 size={20} /> : <AlertCircle size={20} className="text-red-500" />}
-          <span className="font-black text-sm uppercase">{notification.msg}</span>
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-lg border bg-[var(--ux-surface)] border-[var(--ux-line-2)] text-[var(--ux-ink)]">
+          {notification.type === "success" ? (
+            <CheckCircle2
+              size={18}
+              className="text-[var(--ux-mint)] shrink-0"
+            />
+          ) : (
+            <AlertCircle
+              size={18}
+              className="text-[var(--ux-danger)] shrink-0"
+            />
+          )}
+          <span className="font-medium text-xs sm:text-sm">
+            {notification.msg}
+          </span>
         </div>
       )}
 
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0 opacity-20">
-          <div className="absolute top-[10%] -left-[5%] w-[30%] h-[30%] bg-blue-500 rounded-full blur-[100px]" />
-          <div className="absolute bottom-[10%] -right-[5%] w-[35%] h-[35%] bg-purple-500 rounded-full blur-[120px]" />
-      </div>
-
-      <div className="w-full mx-auto relative z-10">
-        <h1 className="text-3xl font-black mb-8 text-slate-900 dark:text-white">Cài đặt tài khoản</h1>
-        
-        <div className="flex flex-col md:flex-row gap-8 items-start">
-          
-          {/* 🚨 TABS SIDEBAR CHUẨN: Chỉ có cursor-pointer, icon nằm im */}
-          <div className="w-full md:w-[280px] shrink-0 flex flex-col gap-1">
-             <button 
-               onClick={() => setActiveTab('profile')} 
-               className={cn("cursor-pointer flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all text-sm border", activeTab === 'profile' ? "border-cyan-500 text-cyan-600 dark:text-cyan-400 bg-white dark:bg-[#0f172a]" : "border-transparent text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-[#0f172a]/50")}
-             >
-               <User size={18} />
-               Thông tin cá nhân
-             </button>
-
-             <button 
-               onClick={() => setActiveTab('security')} 
-               className={cn("cursor-pointer flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all text-sm border", activeTab === 'security' ? "border-cyan-500 text-cyan-600 dark:text-cyan-400 bg-white dark:bg-[#0f172a]" : "border-transparent text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-[#0f172a]/50")}
-             >
-               <Shield size={18} />
-               Bảo mật & Đăng nhập
-             </button>
-
-             <button 
-               onClick={() => setActiveTab('privacy')} 
-               className={cn("cursor-pointer flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all text-sm border", activeTab === 'privacy' ? "border-cyan-500 text-cyan-600 dark:text-cyan-400 bg-white dark:bg-[#0f172a]" : "border-transparent text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-[#0f172a]/50")}
-             >
-               <EyeOff size={18} />
-               Quyền riêng tư
-             </button>
-
-             <button 
-               onClick={() => setActiveTab('notifications')} 
-               className={cn("cursor-pointer flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all text-sm border", activeTab === 'notifications' ? "border-cyan-500 text-cyan-600 dark:text-cyan-400 bg-white dark:bg-[#0f172a]" : "border-transparent text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-[#0f172a]/50")}
-             >
-               <Bell size={18} />
-               Thông báo Email
-             </button>
+      {/* Khung dữ liệu tràn đều 2 bên màn hình */}
+      <div className="relative z-10 w-full px-4 sm:px-6 pb-24 md:pb-10 pt-5 space-y-5 dash-enter">
+        <div className="dash-hero-card rounded-2xl p-5 sm:p-6 flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-xl bg-[var(--ux-accent-soft)] text-[var(--ux-accent)] flex items-center justify-center shrink-0">
+            <Settings className="w-5 h-5" strokeWidth={1.75} />
           </div>
-
-          <div className="flex-1 w-full bg-transparent rounded-3xl border border-slate-200 dark:border-slate-800 p-6 md:p-10 shadow-sm min-h-[400px]">
-            {activeTab === 'profile' && <ProfileTab showNotification={showNotification} />}
-            {activeTab === 'security' && <SecurityTab showNotification={showNotification} />}
-            {activeTab === 'privacy' && <PrivacyTab showNotification={showNotification} />}
-            {activeTab === 'notifications' && <NotificationsTab showNotification={showNotification} />}
+          <div>
+            <h1 className="text-xl sm:text-2xl font-semibold text-[var(--ux-ink)] tracking-[-0.02em]">
+              Cài đặt tài khoản
+            </h1>
+            <p className="text-xs sm:text-sm text-[var(--ux-ink-2)] mt-0.5">
+              Quản lý hồ sơ, bảo mật, quyền riêng tư và tùy chọn thông báo
+            </p>
           </div>
+        </div>
 
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+          {/* TABS SIDEBAR */}
+          <aside className="lg:col-span-3 dash-card rounded-2xl p-2 flex flex-col gap-1">
+            {TABS.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  className={cn(
+                    "w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-left transition-colors border",
+                    isActive
+                      ? "bg-[var(--ux-accent-soft)] border-[var(--ux-accent)]/30 text-[var(--ux-accent)]"
+                      : "border-transparent text-[var(--ux-ink-2)] hover:bg-[var(--ux-surface-2)] hover:text-[var(--ux-ink)]"
+                  )}
+                >
+                  <Icon className="w-4 h-4 shrink-0" strokeWidth={1.75} />
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-sm font-medium truncate">
+                      {tab.label}
+                    </p>
+                    <p className="text-[11px] text-[var(--ux-ink-3)] truncate mt-0.5 hidden sm:block">
+                      {tab.desc}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </aside>
+
+          {/* NỘI DUNG TAB */}
+          <section className="lg:col-span-9 dash-card rounded-2xl p-5 sm:p-7 min-h-[420px]">
+            {activeTab === "profile" && (
+              <ProfileTab showNotification={showNotification} />
+            )}
+            {activeTab === "security" && (
+              <SecurityTab showNotification={showNotification} />
+            )}
+            {activeTab === "privacy" && (
+              <PrivacyTab showNotification={showNotification} />
+            )}
+            {activeTab === "notifications" && (
+              <NotificationsTab showNotification={showNotification} />
+            )}
+          </section>
         </div>
       </div>
     </div>

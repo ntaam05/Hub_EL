@@ -22,6 +22,9 @@ class WatchLoaded extends WatchState {
   final VideoProgressEntity? savedProgress;
   final int currentPosition;
   final int totalDuration;
+  final int watchedSeconds;
+  final int rewardXp;
+  final int rewardCoins;
   final bool isCompleted;
   final bool showResumeBanner;
   final bool isSyncing;
@@ -35,6 +38,9 @@ class WatchLoaded extends WatchState {
     this.savedProgress,
     this.currentPosition = 0,
     this.totalDuration = 0,
+    this.watchedSeconds = 0,
+    this.rewardXp = 0,
+    this.rewardCoins = 0,
     this.isCompleted = false,
     this.showResumeBanner = false,
     this.isSyncing = false,
@@ -54,6 +60,9 @@ class WatchLoaded extends WatchState {
     VideoProgressEntity? savedProgress,
     int? currentPosition,
     int? totalDuration,
+    int? watchedSeconds,
+    int? rewardXp,
+    int? rewardCoins,
     bool? isCompleted,
     bool? showResumeBanner,
     bool? isSyncing,
@@ -67,6 +76,9 @@ class WatchLoaded extends WatchState {
       savedProgress: savedProgress ?? this.savedProgress,
       currentPosition: currentPosition ?? this.currentPosition,
       totalDuration: totalDuration ?? this.totalDuration,
+      watchedSeconds: watchedSeconds ?? this.watchedSeconds,
+      rewardXp: rewardXp ?? this.rewardXp,
+      rewardCoins: rewardCoins ?? this.rewardCoins,
       isCompleted: isCompleted ?? this.isCompleted,
       showResumeBanner: showResumeBanner ?? this.showResumeBanner,
       isSyncing: isSyncing ?? this.isSyncing,

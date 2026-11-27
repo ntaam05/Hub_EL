@@ -1,0 +1,201 @@
+/* Lucian UX/UI Prompt #012 · MIT License (c) 2026 Seokwoooo · https://lucianlabs.dev/uxui-prompt/#012 */
+
+.u012 {
+  --fill: linear-gradient(180deg, #ffc14d, #ff6b6b);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.u012-btn {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  padding: 0;
+  border-radius: 12px;
+  background: var(--ux-surface-2);
+  color: var(--ux-ink-2);
+  box-shadow: 0 0 0 1px var(--ux-line);
+  transition: transform 0.5s var(--ux-spring), box-shadow 0.5s var(--ux-ease),
+    color 0.25s var(--ux-ease);
+  flex-shrink: 0;
+}
+
+.u012-btn:hover {
+  transform: translateY(-2px);
+  color: var(--ux-ink);
+  box-shadow: 0 0 0 1px var(--ux-line-2),
+    0 12px 24px -12px var(--ux-shadow-strong);
+}
+
+.u012-btn:active {
+  transform: scale(0.9);
+}
+
+.u012-btn:focus-visible {
+  outline: 2px solid var(--ux-accent);
+  outline-offset: 3px;
+}
+
+.u012-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.u012-icon {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 18px;
+  height: 22px;
+  transform: translate(-50%, -50%);
+}
+
+.u012-icon svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.u012-out {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linejoin: round;
+}
+
+.u012-in {
+  clip-path: inset(0 0 100% 0);
+  transition: clip-path 0.55s cubic-bezier(0.6, 0, 0.3, 1);
+}
+
+.u012.is-on .u012-in {
+  clip-path: inset(0 0 0 0);
+}
+
+.u012.is-on .u012-out {
+  stroke: transparent;
+  transition: stroke 0.2s 0.4s;
+}
+
+.u012.is-on .u012-icon {
+  animation: u012-drop 0.7s var(--ux-ease);
+}
+
+@keyframes u012-drop {
+  0% {
+    transform: translate(-50%, -50%);
+  }
+  30% {
+    transform: translate(-50%, calc(-50% + 5px)) scaleY(0.9);
+  }
+  60% {
+    transform: translate(-50%, calc(-50% - 4px));
+  }
+  100% {
+    transform: translate(-50%, -50%);
+  }
+}
+
+.u012-p {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 2px;
+  background: var(--c);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.u012.is-burst .u012-p {
+  animation: u012-burst 0.8s var(--ux-ease) forwards;
+}
+
+@keyframes u012-burst {
+  0% {
+    opacity: 1;
+    transform: rotate(var(--a)) translateY(-14px) scale(0.6);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--a)) translateY(-44px) scale(1.1) rotate(160deg);
+  }
+}
+
+.u012-ring {
+  position: absolute;
+  inset: -2px;
+  border-radius: 14px;
+  box-shadow: 0 0 0 2px #ff9f5a;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.u012.is-burst .u012-ring {
+  animation: u012-ring 0.6s var(--ux-ease);
+}
+
+@keyframes u012-ring {
+  from {
+    opacity: 1;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+}
+
+.u012-meta {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ux-ink-2);
+}
+
+.u012-roll {
+  position: relative;
+  height: 20px;
+  overflow: hidden;
+  transition: width 0.45s var(--ux-spring);
+}
+
+.u012-roll span {
+  display: block;
+  width: max-content;
+  white-space: nowrap;
+  line-height: 20px;
+  transition: transform 0.5s var(--ux-spring), opacity 0.3s var(--ux-ease);
+}
+
+.u012-roll span + span {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translateY(100%);
+  opacity: 0;
+}
+
+.u012.is-on .u012-roll span:first-child {
+  transform: translateY(-100%);
+  opacity: 0;
+}
+
+.u012.is-on .u012-roll span + span {
+  transform: none;
+  opacity: 1;
+}
+
+.u012.is-on .u012-lab {
+  color: var(--ux-ink);
+}

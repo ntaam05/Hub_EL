@@ -109,12 +109,11 @@ class _StatsDialogState extends State<StatsDialog> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'THỐNG KÊ HỌC TẬP',
+                        'Thống kê học tập',
                         style: TextStyle(
                           fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.5,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
                         ),
                       ),
                       Text(
