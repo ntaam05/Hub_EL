@@ -8,6 +8,9 @@ import '../../../../core/network/dio_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/loading_widget.dart';
+import '../../../../shared/widgets/lucian_widgets.dart';
+import '../../../authentication/presentation/bloc/auth_bloc.dart';
+import '../../../authentication/presentation/bloc/auth_event.dart';
 import 'package:hub_el_mobile/features/learning/domain/entities/video_item_entity.dart';
 import '../bloc/watch/watch_bloc.dart';
 import '../bloc/watch/watch_event.dart';
@@ -139,9 +142,37 @@ class _WatchScreenState extends State<WatchScreen> {
           'Phòng Học & Luyện Tập',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
+        actions: [
+          LucianBookmarkButton(
+            isBookmarked: _isFavorited,
+            onToggle: _toggleFavorite,
+          ),
+          const SizedBox(width: 4),
+        ],
       ),
       body: BlocConsumer<WatchBloc, WatchState>(
-        listener: (context, state) {},
+        listenWhen: (previous, current) =>
+            current is WatchLoaded &&
+            (current.rewardXp > 0 || current.rewardCoins > 0) &&
+            (previous is! WatchLoaded ||
+                (previous.rewardXp == 0 && previous.rewardCoins == 0)),
+        listener: (context, state) {
+          if (state is WatchLoaded &&
+              (state.rewardXp > 0 || state.rewardCoins > 0)) {
+            try {
+              context.read<AuthBloc>().add(const AuthUserRefreshed());
+            } catch (_) {}
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  '🎉 Hoàn thành 50% video! Nhận +${state.rewardCoins} Xu và +${state.rewardXp} EXP!',
+                ),
+                backgroundColor: AppColors.success,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        },
         builder: (context, state) {
           if (state is WatchLoading) {
             return const Center(child: LoadingWidget(message: 'Đang tải thông tin bài giảng...'));
@@ -198,10 +229,11 @@ class _WatchScreenState extends State<WatchScreen> {
                     },
                   ),
 
-                // 3. Thanh hiển thị tiến độ học tập (Part B)
+                // 3. Thanh hiển thị tiến độ học tập (mục tiêu 50% video)
                 LearningProgressBar(
                   currentPositionSeconds: state.currentPosition,
                   totalDurationSeconds: state.totalDuration,
+                  watchedSeconds: state.watchedSeconds,
                   isCompleted: state.isCompleted,
                 ),
                 AppSpacing.gapV16,

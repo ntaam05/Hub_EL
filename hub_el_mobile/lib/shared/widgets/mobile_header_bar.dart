@@ -477,23 +477,20 @@ class _MobileHeaderBarState extends State<MobileHeaderBar> {
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    gradient: AppColors.primaryGradient,
-                    borderRadius: BorderRadius.circular(10),
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(LucideIcons.graduationCap, color: Colors.white, size: 18),
+                  child: const Icon(LucideIcons.graduationCap, color: Colors.white, size: 17),
                 ),
                 if (showBrandText) ...[
                   AppSpacing.gapH6,
-                  ShaderMask(
-                    shaderCallback: (bounds) => AppColors.primaryGradient.createShader(bounds),
-                    child: const Text(
-                      'Hub-EL',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 18,
-                        letterSpacing: -0.5,
-                      ),
+                  Text(
+                    'Hub-EL',
+                    style: TextStyle(
+                      color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 17,
+                      letterSpacing: -0.3,
                     ),
                   ),
                 ],
@@ -662,45 +659,51 @@ class _MobileHeaderBarState extends State<MobileHeaderBar> {
   }
 
   Widget _buildSearchOverlay(bool isDark) {
+    final accent = isDark ? AppColors.primaryLight : AppColors.primary;
     return Row(
       children: [
         Expanded(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SizedBox(
-                height: 36,
-                child: TextField(
-                  controller: _searchController,
-                  autofocus: true,
-                  textInputAction: TextInputAction.search,
-                  onChanged: _onHeaderSearchChanged,
-                  onSubmitted: (val) {
-                    if (val.trim().isNotEmpty) {
-                      _removeSuggestionsOverlay();
-                      widget.onSearchSubmitted?.call(val.trim());
-                      setState(() => _isSearchOpen = false);
-                    }
-                  },
-                  style: const TextStyle(fontSize: 13),
-                  decoration: InputDecoration(
-                    hintText: 'Tìm kiếm khóa học...',
-                    hintStyle: TextStyle(
-                      fontSize: 13,
-                      color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
-                    ),
-                    prefixIcon: const Icon(LucideIcons.search, size: 16),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                    filled: true,
-                    fillColor: isDark ? AppColors.darkInputFill : Colors.grey.shade100,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(999),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
+          child: Container(
+            height: 40,
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkInputFill : Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: accent, width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: accent.withValues(alpha: 0.16),
+                  blurRadius: 0,
+                  spreadRadius: 3.5,
                 ),
+              ],
+            ),
+            child: TextField(
+              controller: _searchController,
+              autofocus: true,
+              textInputAction: TextInputAction.search,
+              onChanged: _onHeaderSearchChanged,
+              onSubmitted: (val) {
+                if (val.trim().isNotEmpty) {
+                  _removeSuggestionsOverlay();
+                  widget.onSearchSubmitted?.call(val.trim());
+                  setState(() => _isSearchOpen = false);
+                }
+              },
+              style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w500),
+              decoration: InputDecoration(
+                hintText: 'Tìm kiếm khóa học, video...',
+                hintStyle: TextStyle(
+                  fontSize: 13.5,
+                  color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                ),
+                prefixIcon: Icon(LucideIcons.search, size: 16, color: accent),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                filled: false,
               ),
-            ],
+            ),
           ),
         ),
         AppSpacing.gapH8,

@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Camera, Check, X, Trash2, Plus, Loader2, Link as LinkIcon } from 'lucide-react';
 import AvatarEditor from 'react-avatar-editor';
+import { RollingActionButton } from '../../dashboard/LucianPrimitives';
 import { updatePersonalProfileAction, updateAvatarAction } from '@/actions/user/settings';
 import { getOtherUserProfile } from '@/actions/social/social';
 // 🚨 Import action lấy tag sở thích động từ database
@@ -162,9 +163,10 @@ export default function ProfileTab({ showNotification }: { showNotification: (ms
       </div>
 
       <div className="flex justify-start pt-6 border-t border-slate-200 dark:border-slate-800/50 max-w-4xl">
-          <button disabled={isSaving || !isDataLoaded} onClick={handleSaveAll} className="px-10 py-3.5 bg-cyan-600 hover:bg-cyan-500 text-white font-black rounded-xl shadow-lg shadow-cyan-900/20 flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50">
-            {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />} Lưu thay đổi
-          </button>
+          <RollingActionButton
+            label={isSaving ? "Đang lưu..." : "Lưu thay đổi"}
+            onClick={() => { if (!isSaving && isDataLoaded) handleSaveAll(); }}
+          />
       </div>
 
       {showInterestModal && (

@@ -5,8 +5,8 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
+import '../../../../shared/widgets/lucian_widgets.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -26,6 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _rememberMe = false;
+  int _shakeTrigger = 0;
 
   @override
   void dispose() {
@@ -43,6 +44,8 @@ class _LoginScreenState extends State<LoginScreen> {
           rememberMe: _rememberMe,
         ),
       );
+    } else {
+      setState(() => _shakeTrigger++);
     }
   }
 
@@ -58,6 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: BlocConsumer<AuthBloc, AuthState>(
               listener: (context, state) {
                 if (state is AuthFailure) {
+                  setState(() => _shakeTrigger++);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(state.message),
@@ -184,9 +188,16 @@ class _LoginScreenState extends State<LoginScreen> {
               },
               builder: (context, state) {
                 final isLoading = state is AuthLoading;
+                final btnState = state is Authenticated
+                    ? LucianButtonState.ok
+                    : isLoading
+                        ? LucianButtonState.busy
+                        : LucianButtonState.idle;
 
-                return Form(
-                  key: _formKey,
+                return LucianShakeBox(
+                  shakeTrigger: _shakeTrigger,
+                  child: Form(
+                    key: _formKey,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -329,11 +340,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       AppSpacing.gapV16,
 
-                      // NÚT ĐĂNG NHẬP
-                      CustomButton(
-                        text: 'ĐĂNG NHẬP',
-                        variant: ButtonVariant.primary,
-                        isLoading: isLoading,
+                      // NÚT ĐĂNG NHẬP (#062 morphing spinner -> checkmark)
+                      LucianPrimaryButton(
+                        label: 'ĐĂNG NHẬP',
+                        state: btnState,
                         onPressed: isLoading ? null : _handleLogin,
                       ),
                       AppSpacing.gapV24,
@@ -414,7 +424,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ],
                       ),
-                    ],
+                      ],
+                    ),
                   ),
                 );
               },

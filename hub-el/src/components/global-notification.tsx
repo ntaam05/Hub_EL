@@ -82,22 +82,22 @@ export function GlobalNotification() {
   return (
     <>
       {kickedMessage && (
-        <div className="fixed inset-0 z-[10000] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 animate-in zoom-in-95 fade-in duration-200">
+        <div className="fixed inset-0 z-[10000] bg-black/50 backdrop-blur-[2px] flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white dark:bg-[#171B24] rounded-2xl shadow-xl border border-slate-200/80 dark:border-white/10 p-6">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-full bg-amber-500/15 flex items-center justify-center shrink-0">
-                <AlertTriangle className="w-5 h-5 text-amber-500" />
+              <div className="w-9 h-9 rounded-[10px] bg-amber-500/12 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-[18px] h-[18px] text-amber-500" />
               </div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+              <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
                 Tài khoản đăng nhập nơi khác
               </h3>
             </div>
-            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-6">
+            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
               {kickedMessage}
             </p>
             <button
               onClick={() => signOut({ callbackUrl: '/login' })}
-              className="w-full py-2.5 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold text-sm transition-colors cursor-pointer"
+              className="w-full py-2.5 px-4 rounded-[10px] bg-red-600 hover:bg-red-700 text-white font-medium text-sm transition-colors cursor-pointer"
             >
               Xác nhận
             </button>
@@ -109,21 +109,21 @@ export function GlobalNotification() {
         <div 
            key={t.id} 
            onClick={() => { router.push(t.link); removeToast(t.id); }} 
-           className="cursor-pointer pointer-events-auto flex items-start gap-3 w-[320px] md:w-[350px] bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 animate-in slide-in-from-right-8 fade-in duration-300 hover:scale-[1.02] transition-transform"
+           className="cursor-pointer pointer-events-auto flex items-start gap-3 w-[320px] md:w-[348px] bg-white dark:bg-[#171B24] p-4 rounded-xl shadow-lg border border-slate-200/80 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 transition-colors"
         >
-            <img src={t.avatar} className="w-10 h-10 rounded-full object-cover border-2 border-slate-100 dark:border-slate-700 shrink-0" />
+            <img src={t.avatar} className="w-9 h-9 rounded-full object-cover border border-slate-200 dark:border-white/10 shrink-0" />
             <div className="flex-1 min-w-0">
-                <p className="text-[13.5px] text-slate-800 dark:text-slate-200 leading-snug">
+                <p className="text-[13px] text-slate-800 dark:text-slate-200 leading-snug">
                    {t.type === 'friend_request' ? (
-                       <>Bạn nhận được 1 lời mời kết bạn từ <strong className="font-black text-blue-600 dark:text-blue-400">@{t.senderName}</strong></>
+                       <>Lời mời kết bạn từ <span className="font-semibold text-blue-600 dark:text-blue-400">@{t.senderName}</span></>
                    ) : (
-                       <>Bạn nhận được 1 tin nhắn từ <strong className="font-black text-blue-600 dark:text-blue-400">@{t.senderName}</strong></>
+                       <>Tin nhắn mới từ <span className="font-semibold text-blue-600 dark:text-blue-400">@{t.senderName}</span></>
                    )}
                 </p>
-                {t.type === 'message' && <p className="text-sm text-slate-500 dark:text-slate-400 truncate mt-1 font-medium">{t.content}</p>}
+                {t.type === 'message' && <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-1">{t.content}</p>}
             </div>
-            <button onClick={(e) => { e.stopPropagation(); removeToast(t.id); }} className="text-slate-400 hover:text-red-500 transition-colors p-1 bg-slate-100 dark:bg-slate-700 rounded-full shrink-0">
-                <X className="w-3.5 h-3.5" />
+            <button onClick={(e) => { e.stopPropagation(); removeToast(t.id); }} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-1 rounded-lg shrink-0">
+                <X className="w-4 h-4" />
             </button>
         </div>
       ))}

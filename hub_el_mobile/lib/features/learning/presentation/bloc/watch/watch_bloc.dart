@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hub_el_mobile/core/network/api_result.dart';
 import 'package:hub_el_mobile/features/learning/domain/entities/video_item_entity.dart';
@@ -20,6 +21,7 @@ class WatchBloc extends Bloc<WatchEvent, WatchState> {
   int _accumulatedWatchSeconds = 0;
   int _totalSessionWatchedSeconds = 0;
   bool _hasAutoCompleted = false;
+  Timer? _watchTimer;
 
   WatchBloc({
     required this.getVideoDetailUseCase,
@@ -31,9 +33,28 @@ class WatchBloc extends Bloc<WatchEvent, WatchState> {
     on<WatchInitRequested>(_onInitRequested);
     on<WatchPlayStateChanged>(_onPlayStateChanged);
     on<WatchPositionUpdated>(_onPositionUpdated);
+    on<WatchSecondTicked>(_onSecondTicked);
     on<WatchProgressSyncRequested>(_onProgressSyncRequested);
     on<WatchDismissResumeBanner>(_onDismissResumeBanner);
     on<WatchMarkCompletedRequested>(_onMarkCompletedRequested);
+  }
+
+  void _startWatchTimer() {
+    _watchTimer?.cancel();
+    _watchTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!isClosed) add(const WatchSecondTicked());
+    });
+  }
+
+  void _stopWatchTimer() {
+    _watchTimer?.cancel();
+    _watchTimer = null;
+  }
+
+  @override
+  Future<void> close() {
+    _stopWatchTimer();
+    return super.close();
   }
 
   Future<void> _onInitRequested(
@@ -41,6 +62,7 @@ class WatchBloc extends Bloc<WatchEvent, WatchState> {
     Emitter<WatchState> emit,
   ) async {
     emit(const WatchLoading());
+    _stopWatchTimer();
     _accumulatedWatchSeconds = 0;
     _totalSessionWatchedSeconds = 0;
     _hasAutoCompleted = false;
@@ -69,6 +91,9 @@ class WatchBloc extends Bloc<WatchEvent, WatchState> {
     if (progressRes is ApiSuccess<VideoProgressEntity>) {
       savedProgress = progressRes.data;
       isCompleted = savedProgress.isCompleted;
+      _totalSessionWatchedSeconds =
+          savedProgress.lastWatched > 0 ? savedProgress.lastWatched : 0;
+      _hasAutoCompleted = isCompleted;
       // Hiển thị banner tiếp tục học nếu đã xem hơn 5 giây và chưa kết thúc
       if (savedProgress.lastWatched > 5 && !isCompleted) {
         showResumeBanner = true;
@@ -84,6 +109,7 @@ class WatchBloc extends Bloc<WatchEvent, WatchState> {
       savedProgress: savedProgress,
       currentPosition: savedProgress?.lastWatched ?? 0,
       totalDuration: savedProgress?.duration ?? event.video.duration,
+      watchedSeconds: _totalSessionWatchedSeconds,
       isCompleted: isCompleted,
       showResumeBanner: showResumeBanner,
     ));
@@ -93,6 +119,11 @@ class WatchBloc extends Bloc<WatchEvent, WatchState> {
     WatchPlayStateChanged event,
     Emitter<WatchState> emit,
   ) {
+    if (event.isPlaying) {
+      _startWatchTimer();
+    } else {
+      _stopWatchTimer();
+    }
     if (state is WatchLoaded) {
       emit((state as WatchLoaded).copyWith(isPlaying: event.isPlaying));
     }
@@ -105,21 +136,40 @@ class WatchBloc extends Bloc<WatchEvent, WatchState> {
     if (state is! WatchLoaded) return;
     final loaded = state as WatchLoaded;
 
-    if (loaded.isPlaying) {
-      _accumulatedWatchSeconds += 1;
-      _totalSessionWatchedSeconds += 1;
-    }
+    final effectiveDuration = event.totalDurationSeconds > 0
+        ? event.totalDurationSeconds
+        : loaded.totalDuration;
 
-    // Tự động đánh dấu hoàn thành sau khi xem tích lũy >= 60 giây
-    if (_totalSessionWatchedSeconds >= 60 && !loaded.isCompleted && !_hasAutoCompleted) {
+    emit(loaded.copyWith(
+      currentPosition: event.positionSeconds,
+      totalDuration: effectiveDuration,
+    ));
+  }
+
+  void _onSecondTicked(
+    WatchSecondTicked event,
+    Emitter<WatchState> emit,
+  ) {
+    if (state is! WatchLoaded) return;
+    final loaded = state as WatchLoaded;
+    if (!loaded.isPlaying) return;
+
+    _accumulatedWatchSeconds += 1;
+    _totalSessionWatchedSeconds += 1;
+
+    final requiredSeconds =
+        loaded.totalDuration > 0 ? (loaded.totalDuration * 0.5).ceil() : 0;
+
+    // Tự động đánh dấu hoàn thành khi xem đủ >= 50% thời lượng video theo thời gian thực
+    if (loaded.totalDuration > 0 &&
+        _totalSessionWatchedSeconds >= requiredSeconds &&
+        !loaded.isCompleted &&
+        !_hasAutoCompleted) {
       _hasAutoCompleted = true;
       add(const WatchMarkCompletedRequested());
     }
 
-    emit(loaded.copyWith(
-      currentPosition: event.positionSeconds,
-      totalDuration: event.totalDurationSeconds > 0 ? event.totalDurationSeconds : loaded.totalDuration,
-    ));
+    emit(loaded.copyWith(watchedSeconds: _totalSessionWatchedSeconds));
   }
 
   Future<void> _onProgressSyncRequested(
@@ -172,12 +222,45 @@ class WatchBloc extends Bloc<WatchEvent, WatchState> {
   ) async {
     if (state is! WatchLoaded) return;
     final loaded = state as WatchLoaded;
+    final wasAlreadyCompleted = loaded.isCompleted;
+
+    // Đồng bộ videoMeta trước để đảm bảo bản ghi Video tồn tại trong DB kể cả video ngắn
+    final secondsToSync = _accumulatedWatchSeconds > 0 ? _accumulatedWatchSeconds : 1;
+    _accumulatedWatchSeconds = 0;
+
+    final meta = {
+      'title': loaded.video.title,
+      'channelName': loaded.video.channelTitle,
+      'thumbnail': loaded.video.thumbnailUrl,
+      'duration': loaded.totalDuration,
+    };
+
+    final syncRes = await syncVideoProgressUseCase(
+      videoId: loaded.video.videoId,
+      seconds: secondsToSync,
+      lastWatchedSeconds: loaded.currentPosition,
+      videoMeta: meta,
+      markCompleted: true,
+    );
+
+    if (syncRes is ApiSuccess<VideoProgressEntity>) {
+      emit(loaded.copyWith(
+        savedProgress: syncRes.data,
+        isCompleted: true,
+        showResumeBanner: false,
+        rewardXp: wasAlreadyCompleted ? 0 : 50,
+        rewardCoins: wasAlreadyCompleted ? 0 : 50,
+      ));
+      return;
+    }
 
     final result = await markVideoCompletedUseCase(loaded.video.videoId);
     if (result is ApiSuccess<bool> && result.data) {
       emit(loaded.copyWith(
         isCompleted: true,
         showResumeBanner: false,
+        rewardXp: wasAlreadyCompleted ? 0 : 50,
+        rewardCoins: wasAlreadyCompleted ? 0 : 50,
       ));
     }
   }

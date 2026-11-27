@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { Key, Trash2, Mail, Loader2, Check } from 'lucide-react';
 import { getSecurityInfoAction, sendOtpAction, verifyOtpAction, changePasswordAction, resetPasswordAction, changeEmailAction } from '@/actions/user/security';
+import { RollingActionButton } from '../../dashboard/LucianPrimitives';
 
 export default function SecurityTab({ showNotification }: { showNotification: (msg: string, type: 'success' | 'error') => void }) {
   const { data: session } = useSession();
@@ -132,10 +133,11 @@ export default function SecurityTab({ showNotification }: { showNotification: (m
                         </div>
                         <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Mật khẩu mới" className="px-4 py-3 rounded-xl bg-white/50 dark:bg-[#0f172a]/50 border border-slate-200 dark:border-slate-700 outline-none focus:border-cyan-500 transition-colors" />
                         <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Xác nhận mật khẩu mới" className="px-4 py-3 rounded-xl bg-white/50 dark:bg-[#0f172a]/50 border border-slate-200 dark:border-slate-700 outline-none focus:border-cyan-500 transition-colors" />
-                        <button disabled={isSaving} onClick={handleUpdatePassword} className="cursor-pointer px-6 py-3 bg-slate-800 dark:bg-slate-100 hover:bg-slate-900 dark:hover:bg-white text-white dark:text-slate-900 font-bold rounded-xl shadow-md transition-colors mt-2 flex justify-center items-center gap-2">
-                            {isSaving ? <Loader2 className="w-5 h-5 animate-spin"/> : <Check size={18} />}
-                            Cập nhật mật khẩu
-                        </button>
+                        <RollingActionButton
+                          label={isSaving ? "Đang cập nhật..." : "Cập nhật mật khẩu"}
+                          onClick={() => { if (!isSaving) handleUpdatePassword(); }}
+                          className="mt-2 w-fit"
+                        />
                       </>
                     ) : (
                       <div className="animate-in fade-in slide-in-from-left-4 flex flex-col gap-4">
@@ -176,7 +178,11 @@ export default function SecurityTab({ showNotification }: { showNotification: (m
           {!changeEmailMode ? (
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mt-4">
                   <input type="email" disabled value={securityInfo.email} className="w-full max-w-md px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 cursor-not-allowed" />
-                  <button onClick={() => { setChangeEmailMode(true); setIsOtpVerified(false); }} className="px-6 py-3 bg-transparent border border-cyan-500 text-cyan-600 dark:text-cyan-400 font-bold rounded-xl hover:bg-cyan-50 dark:hover:bg-cyan-900/20 transition-colors shrink-0">Đổi Email</button>
+                  <RollingActionButton
+                    label="Đổi Email"
+                    onClick={() => { setChangeEmailMode(true); setIsOtpVerified(false); }}
+                    className="shrink-0"
+                  />
               </div>
           ) : (
               <div className="animate-in fade-in flex flex-col gap-4 mt-4 max-w-md">

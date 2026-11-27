@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/utils/avatar_image_helper.dart';
 import '../../../../shared/widgets/error_state_widget.dart';
 import '../../../../shared/widgets/loading_widget.dart';
+import '../../../../shared/widgets/lucian_widgets.dart';
 import '../../../authentication/domain/entities/user_entity.dart';
 import '../../../learning/domain/entities/video_item_entity.dart';
 import '../../../learning/presentation/screens/watch_screen.dart';
@@ -33,109 +34,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
     context.read<DashboardBloc>().add(const DashboardFetchRequested());
   }
 
-  void _showRewardSuccessDialog(BuildContext context, int xp, int coins) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.darkSurface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 60,
-              height: 60,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(colors: [Color(0xFFFACC15), Color(0xFFEA580C)]),
-              ),
-              child: const Icon(LucideIcons.sparkles, color: Colors.white, size: 32),
-            ),
-            AppSpacing.gapV16,
-            const Text(
-              'NHẬN THƯỞNG THÀNH CÔNG! 🎉',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white),
-            ),
-            AppSpacing.gapV12,
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (xp > 0)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.blueAccent.withValues(alpha: 0.3)),
-                    ),
-                    child: Text('+$xp XP', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent)),
-                  ),
-                if (xp > 0 && coins > 0) const SizedBox(width: 8),
-                if (coins > 0)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.amber.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.amberAccent.withValues(alpha: 0.3)),
-                    ),
-                    child: Text('+$coins Xu', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.amberAccent)),
-                  ),
-              ],
-            ),
-            AppSpacing.gapV20,
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                ),
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('Tuyệt vời', style: TextStyle(fontWeight: FontWeight.bold)),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Stack(
-      children: [
-        // Hiệu ứng ánh sáng nền vũ trụ mờ ảo ở đỉnh (Ambient Glow)
-        Positioned(
-          top: -80,
-          left: 0,
-          right: 0,
-          child: Center(
-            child: Container(
-              width: 320,
-              height: 320,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    AppColors.primary.withValues(alpha: isDark ? 0.15 : 0.08),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-
+    return LucianMeteorBackground(
+      child: Stack(
+        children: [
         // Nội dung trang Dashboard
         BlocConsumer<DashboardBloc, DashboardState>(
           listener: (context, state) {
             if (state is DashboardRewardClaimed) {
-              _showRewardSuccessDialog(context, state.xpDelta, state.coinsDelta);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    '🎉 Hoàn thành nhiệm vụ! Nhận +${state.coinsDelta} Xu và +${state.xpDelta} EXP!',
+                  ),
+                  backgroundColor: AppColors.success,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
             }
           },
           builder: (context, state) {
@@ -163,24 +81,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.only(left: 16, right: 16, top: 20, bottom: 96),
                   children: [
-                    // Tiêu đề Chào mừng
-                    RichText(
-                      text: TextSpan(
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: -0.5,
-                          color: isDark ? Colors.white : AppColors.lightTextPrimary,
-                        ),
-                        children: [
-                          const TextSpan(text: 'Chào mừng trở lại, '),
-                          TextSpan(
-                            text: '${widget.user.displayName}! 👋',
-                            style: const TextStyle(color: AppColors.primaryLight),
-                          ),
-                        ],
-                      ),
-                    ),
+                    // Thẻ chào & chỉ số nhanh (khớp layout Web Row 1)
+                    _buildUserHeroCard(context, isDark),
                     AppSpacing.gapV20,
 
                     // 1. Thẻ Tiếp Tục Học
@@ -204,7 +106,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         }
                       },
                     ),
-                    AppSpacing.gapV24,
+                    AppSpacing.gapV20,
 
                     // 2. Thẻ Nhiệm Vụ Hôm Nay
                     DailyTasksCard(
@@ -214,29 +116,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         context.read<DashboardBloc>().add(DashboardClaimTaskRequested(taskId));
                       },
                     ),
-                    AppSpacing.gapV24,
+                    AppSpacing.gapV20,
 
-                    // 3. Thẻ Dành Cho Bạn (Đề xuất)
-                    RecommendedVideosCard(
-                      videos: data.recommendedVideos,
-                      onVideoTap: (vid) {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => WatchScreen(
-                              video: VideoItemEntity(
-                                videoId: vid.videoId,
-                                title: vid.title,
-                                channelTitle: vid.channelTitle,
-                                thumbnailUrl: vid.thumbnailUrl,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                    AppSpacing.gapV24,
-
-                    // 4. Thẻ Video Yêu Thích
+                    // 3. Thẻ Video Yêu Thích
                     FavoriteVideosCard(
                       videos: data.favoriteVideos,
                       onVideoTap: (vid) {
@@ -254,7 +136,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         );
                       },
                     ),
-                    AppSpacing.gapV24,
+                    AppSpacing.gapV20,
+
+                    // 4. Thẻ Dành Cho Bạn (Đề xuất)
+                    RecommendedVideosCard(
+                      videos: data.recommendedVideos,
+                      onVideoTap: (vid) {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => WatchScreen(
+                              video: VideoItemEntity(
+                                videoId: vid.videoId,
+                                title: vid.title,
+                                channelTitle: vid.channelTitle,
+                                thumbnailUrl: vid.thumbnailUrl,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    AppSpacing.gapV20,
 
                     // 5. Thẻ Hoạt Động Gần Đây
                     RecentActivitiesCard(activities: data.recentActivities),
@@ -267,6 +169,76 @@ class _DashboardScreenState extends State<DashboardScreen> {
           },
         ),
       ],
+      ),
+    );
+  }
+
+  Widget _buildUserHeroCard(BuildContext context, bool isDark) {
+    final avatarProvider = safeGetImageProvider(widget.user.displayAvatar);
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkCard : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.primary,
+                  border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                  image: avatarProvider != null
+                      ? DecorationImage(image: avatarProvider, fit: BoxFit.cover)
+                      : null,
+                ),
+                child: avatarProvider == null
+                    ? Center(
+                        child: Text(
+                          widget.user.displayName.isNotEmpty
+                              ? widget.user.displayName.substring(0, 1).toUpperCase()
+                              : 'U',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 16),
+                        ),
+                      )
+                    : null,
+              ),
+              AppSpacing.gapH12,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Xin chào, ${widget.user.displayName}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Tiếp tục hành trình chinh phục tri thức của bạn',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

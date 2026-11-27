@@ -37,30 +37,33 @@ class StreakDialog extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Dialog(
-      backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      backgroundColor: isDark ? AppColors.darkCard : Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 56,
-              height: 56,
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
-                color: (isStudiedToday ? AppColors.streak : const Color(0xFF94A3B8)).withValues(alpha: 0.15),
+                color: (isStudiedToday ? AppColors.streak : const Color(0xFF94A3B8)).withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 LucideIcons.flame,
                 color: isStudiedToday ? AppColors.streak : const Color(0xFF94A3B8),
-                size: 32,
+                size: 24,
               ),
             ),
             AppSpacing.gapV12,
             Text(
-              '$streak Ngày Liên Tục! 🔥',
-              style: AppTextStyles.h2.copyWith(fontSize: 20),
+              '$streak ngày liên tục',
+              style: AppTextStyles.h2.copyWith(fontSize: 18, fontWeight: FontWeight.w600),
             ),
             AppSpacing.gapV8,
             Text(
@@ -118,11 +121,12 @@ class StreakDialog extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Đã hiểu', style: TextStyle(fontWeight: FontWeight.bold)),
+                child: const Text('Đã hiểu', style: TextStyle(fontWeight: FontWeight.w600)),
               ),
             ),
           ],

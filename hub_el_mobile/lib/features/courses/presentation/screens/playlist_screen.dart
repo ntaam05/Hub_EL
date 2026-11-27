@@ -4,6 +4,7 @@ import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../shared/widgets/lucian_widgets.dart';
 import '../../../learning/data/models/video_item_model.dart';
 import '../../../learning/domain/entities/video_item_entity.dart';
 import '../../../learning/presentation/screens/watch_screen.dart';
@@ -221,7 +222,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
         : (_totalVideos > 0 ? _totalVideos : _videoIds.length);
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.darkBackground : const Color(0xFFF8FAFC),
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
       appBar: AppBar(
         title: const Text(
           'CHI TIẾT KHÓA HỌC',
@@ -230,17 +231,16 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
         backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
         elevation: 0.5,
         actions: [
-          IconButton(
-            icon: Icon(
-              _isSaved ? LucideIcons.bookmarkCheck : LucideIcons.bookmark,
-              color: _isSaved ? AppColors.primary : (isDark ? Colors.white70 : Colors.black87),
-            ),
-            tooltip: _isSaved ? 'Đã lưu' : 'Lưu khóa học',
-            onPressed: _isToggling ? null : _toggleSaveCourse,
+          LucianBookmarkButton(
+            isBookmarked: _isSaved,
+            onToggle: () {
+              if (!_isToggling) _toggleSaveCourse();
+            },
           ),
         ],
       ),
-      body: RefreshIndicator(
+      body: LucianMeteorBackground(
+        child: RefreshIndicator(
         onRefresh: _loadPlaylistDetails,
         child: ListView(
           padding: const EdgeInsets.all(16),
@@ -645,6 +645,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                 );
               }),
           ],
+        ),
         ),
       ),
     );

@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../shared/widgets/lucian_widgets.dart';
 import '../../domain/entities/settings_entities.dart';
 import '../cubit/settings_cubit.dart';
 import '../cubit/settings_state.dart';
@@ -235,15 +236,17 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
     required ValueChanged<bool> onChanged,
     required bool isDark,
   }) {
-    return SwitchListTile(
-      value: value,
-      onChanged: onChanged,
-      activeThumbColor: AppColors.primaryLight,
+    return ListTile(
+      onTap: () => onChanged(!value),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
       subtitle: Text(
         subtitle,
         style: TextStyle(fontSize: 12, color: isDark ? Colors.white54 : AppColors.lightTextSecondary),
+      ),
+      trailing: LucianToggleSwitch(
+        value: value,
+        onChanged: onChanged,
       ),
     );
   }

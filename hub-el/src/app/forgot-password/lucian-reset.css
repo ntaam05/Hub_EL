@@ -1,0 +1,573 @@
+/* Lucian UX/UI Prompt #405 · MIT License (c) 2026 Seokwoooo · https://lucianlabs.dev/uxui-prompt/#405 */
+/* Lucian UX/UI Prompt #406 · MIT License (c) 2026 Seokwoooo · https://lucianlabs.dev/uxui-prompt/#406 */
+
+.u405-dark {
+  --ux-page: #0d1117;
+  --ux-surface: #161b22;
+  --ux-surface-2: #0d1117;
+  --ux-surface-3: #21262d;
+  --ux-ink: #f8fafc;
+  --ux-ink-2: #cbd5e1;
+  --ux-ink-3: #64748b;
+  --ux-line: rgba(148, 163, 184, 0.22);
+  --ux-line-2: rgba(148, 163, 184, 0.35);
+  --ux-accent: #60a5fa;
+  --ux-accent-soft: rgba(59, 130, 246, 0.18);
+  --ux-accent-ink: #0b0c12;
+  --ux-mint: #34d399;
+  --ux-warn: #fbbf24;
+  --ux-danger: #f87171;
+}
+
+/* =========================================================
+   #405 Password reset
+   ========================================================= */
+.u405 {
+  position: relative;
+  width: 100%;
+}
+
+.u405-box {
+  position: relative;
+  width: 100%;
+}
+
+.u405-f {
+  position: relative;
+  height: 52px;
+  border-radius: 12px;
+  background: var(--ux-surface-2);
+  box-shadow: inset 0 0 0 1px var(--ux-line-2);
+  transition: box-shadow 0.2s;
+}
+
+.u405-f:hover {
+  box-shadow: inset 0 0 0 1px var(--ux-ink-3);
+}
+
+.u405-f.is-f {
+  box-shadow: inset 0 0 0 1.5px var(--ux-accent), 0 0 0 4px var(--ux-accent-soft);
+}
+
+.u405-f::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--ux-danger);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.5s var(--ux-ease);
+}
+
+.u405-f.is-err::after {
+  transform: scaleX(1);
+}
+
+.u405-f.is-shake {
+  animation: u405-shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+@keyframes u405-shake {
+  15% {
+    transform: translateX(-7px);
+  }
+  35% {
+    transform: translateX(6px);
+  }
+  55% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(2px);
+  }
+}
+
+.u405-f label {
+  position: absolute;
+  left: 15px;
+  top: 16px;
+  font-size: 14px;
+  color: var(--ux-ink-3);
+  transform-origin: left top;
+  transition: transform 0.4s var(--ux-spring), color 0.2s;
+  pointer-events: none;
+}
+
+.u405-f.is-up label {
+  transform: translateY(-10px) scale(0.76);
+  color: var(--ux-ink-2);
+}
+
+.u405-f.is-f label {
+  color: var(--ux-accent);
+}
+
+.u405-f.is-err label {
+  color: var(--ux-danger);
+}
+
+.u405-in {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  padding: 20px 15px 6px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  outline: none;
+  font-size: 14px;
+  color: var(--ux-ink);
+}
+
+.u405 .u405-in:focus-visible {
+  outline: none;
+}
+
+.u405-send {
+  position: relative;
+  width: 100%;
+  height: 46px;
+  margin-top: 12px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--ux-accent);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  transition: transform 0.45s var(--ux-spring), background-color 0.2s, opacity 0.2s;
+}
+
+.u405-send:hover:not(:disabled) {
+  background: var(--ux-accent-2);
+  transform: translateY(-1px);
+}
+
+.u405-send:active:not(:disabled) {
+  transform: scale(0.97, 0.93);
+  transition-duration: 0.1s;
+}
+
+.u405-send:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.u405-plane {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 5;
+  width: 30px;
+  height: 30px;
+  margin: -15px 0 0 -15px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.u405-plane svg {
+  width: 30px;
+  height: 30px;
+  overflow: visible;
+}
+
+.u405-plane .p1 {
+  fill: #ffffff;
+}
+
+.u405-plane .p2 {
+  fill: #dbeafe;
+}
+
+.u405-plane path {
+  stroke: #0f172a;
+  stroke-width: 1.1;
+  stroke-linejoin: round;
+}
+
+.u405-env-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.u405-env {
+  width: 68px;
+  height: 56px;
+  overflow: visible;
+}
+
+.u405-env .bk {
+  fill: #cbd5e1;
+}
+
+.dark .u405-env .bk {
+  fill: #1e293b;
+}
+
+.u405-env .lt {
+  fill: #ffffff;
+  stroke: #cbd5e1;
+  stroke-width: 1;
+}
+
+.dark .u405-env .lt {
+  fill: #f1f5f9;
+  stroke: #94a3b8;
+}
+
+.u405-env .ln {
+  stroke: #60a5fa;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.u405-env .fr {
+  fill: #e2e8f0;
+}
+
+.dark .u405-env .fr {
+  fill: #334155;
+}
+
+.u405-env .fl {
+  fill: #93c5fd;
+  transform-origin: 36px 16px;
+  transform: scaleY(-1);
+  transition: transform 0.5s var(--ux-spring) 0.45s;
+}
+
+.u405-env .letter {
+  transform: translateY(-14px);
+  transition: transform 0.5s var(--ux-ease) 0.1s;
+}
+
+.u405.is-sent .u405-env .letter {
+  transform: translateY(13px);
+}
+
+.u405.is-sent .u405-env .fl {
+  transform: none;
+}
+
+.u405.is-sent .u405-env {
+  animation: u405-bob 0.7s var(--ux-spring) 0.85s;
+}
+
+@keyframes u405-bob {
+  40% {
+    transform: translateY(3px) scale(1.04, 0.96);
+  }
+}
+
+.u405-to {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 12.5px;
+  color: var(--ux-ink-2);
+}
+
+.u405-chg {
+  height: 22px;
+  padding: 0 7px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ux-accent);
+}
+
+.u405-chg:hover {
+  background: var(--ux-accent-soft);
+}
+
+.u405-re {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 14px 0 5px;
+  border: 0;
+  border-radius: 17px;
+  background: var(--ux-surface-2);
+  box-shadow: inset 0 0 0 1px var(--ux-line-2);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ux-ink);
+  font-variant-numeric: tabular-nums;
+  transition: transform 0.4s var(--ux-spring), background 0.2s, color 0.2s;
+}
+
+.u405-re:hover:not(:disabled) {
+  background: var(--ux-surface-3);
+  transform: translateY(-1px);
+}
+
+.u405-re:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.u405-re:disabled {
+  color: var(--ux-ink-3);
+  cursor: default;
+}
+
+.u405-ring {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  flex: none;
+}
+
+.u405-ring svg {
+  width: 24px;
+  height: 24px;
+  transform: rotate(-90deg);
+}
+
+.u405-ring circle {
+  fill: none;
+  stroke-width: 2.4;
+}
+
+.u405-ring .tr {
+  stroke: var(--ux-line-2);
+}
+
+.u405-ring .pr {
+  stroke: var(--ux-accent);
+  stroke-linecap: round;
+  stroke-dasharray: 62.8;
+  transition: stroke-dashoffset 1s linear;
+}
+
+.u405-ring em {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-style: normal;
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--ux-ink-2);
+}
+
+.u405-ring i {
+  position: absolute;
+  inset: 5px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.u405-ring i::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--ux-accent);
+  border-top-color: transparent;
+  transform: rotate(30deg);
+}
+
+.u405-ring i::after {
+  content: "";
+  position: absolute;
+  right: -1px;
+  top: -1px;
+  border: 4px solid transparent;
+  border-left-color: var(--ux-accent);
+  transform: rotate(-40deg);
+}
+
+.u405-re.is-ready .u405-ring em {
+  opacity: 0;
+}
+
+.u405-re.is-ready .u405-ring i {
+  opacity: 1;
+}
+
+/* =========================================================
+   #406 Verification code
+   ========================================================= */
+.u406 {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.u406-wrap {
+  position: relative;
+}
+
+.u406-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(6, 42px);
+  gap: 8px;
+}
+
+@media (max-width: 380px) {
+  .u406-row {
+    grid-template-columns: repeat(6, 38px);
+    gap: 6px;
+  }
+}
+
+.u406-row.is-shake {
+  animation: u406-shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+@keyframes u406-shake {
+  15% {
+    transform: translateX(-8px);
+  }
+  35% {
+    transform: translateX(7px);
+  }
+  55% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(2px);
+  }
+}
+
+.u406-b {
+  position: relative;
+  height: 52px;
+  border-radius: 12px;
+  background: var(--ux-surface-2);
+  box-shadow: inset 0 0 0 1px var(--ux-line-2);
+  transition: box-shadow 0.2s, background 0.3s, transform 0.55s var(--ux-spring),
+    opacity 0.3s;
+  transition-delay: 0s, 0s, calc(var(--d, 0) * 35ms), calc(var(--d, 0) * 35ms);
+}
+
+.u406-b:hover {
+  box-shadow: inset 0 0 0 1px var(--ux-ink-3);
+}
+
+.u406-b.is-fill {
+  box-shadow: inset 0 0 0 1px var(--ux-ink-3);
+}
+
+.u406-b.is-cur {
+  box-shadow: inset 0 0 0 1.5px var(--ux-accent), 0 0 0 4px var(--ux-accent-soft);
+}
+
+.u406-in {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  text-align: center;
+  font-size: 20px;
+  color: transparent;
+  caret-color: var(--ux-accent);
+  outline: none;
+}
+
+.u406 .u406-in:focus-visible {
+  outline: none;
+}
+
+.u406-g {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--ux-ink);
+  pointer-events: none;
+}
+
+.u406-g.is-pop {
+  animation: u406-pop 0.45s var(--ux-spring);
+}
+
+@keyframes u406-pop {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.4);
+  }
+}
+
+.u406-row.is-err .u406-b {
+  box-shadow: inset 0 0 0 1px var(--ux-danger);
+  background: color-mix(in srgb, var(--ux-danger) 8%, var(--ux-surface-2));
+}
+
+.u406-row.is-busy .u406-b {
+  animation: u406-wave 0.8s var(--ux-ease) infinite;
+  animation-delay: calc(var(--i) * 70ms);
+}
+
+@keyframes u406-wave {
+  40% {
+    transform: translateY(-4px);
+  }
+}
+
+.u406-row.is-merge .u406-b {
+  transform: translateX(var(--mx)) scale(0.35);
+  opacity: 0;
+  background: var(--ux-mint);
+  box-shadow: none;
+}
+
+.u406-row.is-merge .u406-g {
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.u406-ck {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 56px;
+  height: 56px;
+  margin: -28px 0 0 -28px;
+  opacity: 0;
+  transform: scale(0.2);
+  pointer-events: none;
+  transition: transform 0.6s var(--ux-spring) 0.18s, opacity 0.2s 0.18s;
+}
+
+.u406-ck circle {
+  fill: var(--ux-mint);
+}
+
+.u406-ck path {
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 3.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 32;
+  stroke-dashoffset: 32;
+  transition: stroke-dashoffset 0.45s var(--ux-ease) 0.45s;
+}
+
+.u406-row.is-merge + .u406-ck {
+  opacity: 1;
+  transform: none;
+}
+
+.u406-row.is-merge + .u406-ck path {
+  stroke-dashoffset: 0;
+}

@@ -110,19 +110,10 @@ class _AiQuizGeneratorCardState extends State<AiQuizGeneratorCard> {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF6366F1), Color(0xFF3B82F6)],
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF6366F1).withValues(alpha: 0.35),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
+                          color: AppColors.primary.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(LucideIcons.sparkles, color: Colors.white, size: 20),
+                        child: const Icon(LucideIcons.sparkles, color: AppColors.primaryLight, size: 18),
                       ),
                       AppSpacing.gapH12,
                       Column(
@@ -145,14 +136,18 @@ class _AiQuizGeneratorCardState extends State<AiQuizGeneratorCard> {
                   ),
                   if (isProUser)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: AppColors.proBadge,
-                        borderRadius: BorderRadius.circular(8),
+                        color: AppColors.proBadge.withValues(alpha: 0.16),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: AppColors.proBadge.withValues(alpha: 0.35)),
                       ),
                       child: Text(
-                        'PRO -30% ⚡',
-                        style: AppTextStyles.microBadge.copyWith(color: AppColors.proText),
+                        'PRO -30%',
+                        style: AppTextStyles.microBadge.copyWith(
+                          color: isDark ? const Color(0xFFFACC15) : AppColors.proText,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                 ],
@@ -266,10 +261,8 @@ class _AiQuizGeneratorCardState extends State<AiQuizGeneratorCard> {
                               },
                         child: Ink(
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF6366F1), Color(0xFF3B82F6)],
-                            ),
-                            borderRadius: BorderRadius.circular(12),
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(10),
                           ),
                           child: Container(
                             alignment: Alignment.center,

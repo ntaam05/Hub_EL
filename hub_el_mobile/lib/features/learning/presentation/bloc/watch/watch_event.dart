@@ -39,3 +39,7 @@ class WatchDismissResumeBanner extends WatchEvent {
 class WatchMarkCompletedRequested extends WatchEvent {
   const WatchMarkCompletedRequested();
 }
+
+class WatchSecondTicked extends WatchEvent {
+  const WatchSecondTicked();
+}

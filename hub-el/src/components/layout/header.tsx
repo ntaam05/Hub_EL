@@ -15,6 +15,7 @@ import {
 import { ThemeTogglePill } from "./theme-toggle";
 import { StatsModal } from "../modals/stats-modal";
 import { cn } from "@/lib/utils";
+import LucianSearchBar from "./LucianSearchBar";
 
 import { checkEducationalVideoAction, getSearchSuggestionsAction, validateSearchQueryAction } from '@/actions/video/video';
 
@@ -182,7 +183,7 @@ export function Header() {
     setShowSuggestions(false);
     const checkRes = await validateSearchQueryAction(trimmed, session?.user?.id);
     if (!checkRes.isValid) {
-      showNotification(checkRes.reason || "Từ khóa tìm kiếm không hợp lệ!", 'error', 'TÌM KIẾM BỊ TỪ CHỐI!');
+      showNotification(checkRes.reason || "Từ khóa tìm kiếm không hợp lệ", 'error', 'Từ khóa chưa phù hợp');
       return;
     }
     router.push(`/explore?q=${encodeURIComponent(trimmed)}`);
@@ -307,15 +308,15 @@ export function Header() {
     <>
       <header className="h-20 px-3 md:px-8 flex items-center bg-white/90 dark:bg-[#0f172a]/90 backdrop-blur-md shadow-sm border-b border-gray-200 dark:border-slate-800 shrink-0 z-30 sticky top-0 transition-colors">
         
-        {/* 🚨 KHỐI UI RENDER THÔNG BÁO TÙY CHỈNH */}
+        {/* Khối thông báo */}
         {notification && (
-          <div className={`fixed top-24 left-1/2 -translate-x-1/2 z-[100] flex items-start gap-3 px-5 py-4 rounded-2xl shadow-2xl border bg-white dark:bg-slate-900 animate-in fade-in slide-in-from-top-5 max-w-[90%] md:max-w-md w-full ${notification.type === 'error' ? 'border-red-500 text-red-600 dark:text-red-400' : 'border-blue-500 text-blue-600 dark:text-blue-400'}`}>
-            {notification.type === 'error' ? <AlertCircle size={24} className="text-red-500 shrink-0 mt-0.5" /> : <CheckCircle2 size={24} className="text-blue-500 shrink-0 mt-0.5" />}
+          <div className={`fixed top-20 left-1/2 -translate-x-1/2 z-[100] flex items-start gap-3 px-4 py-3.5 rounded-xl shadow-lg border bg-white dark:bg-[#171B24] max-w-[90%] md:max-w-md w-full ${notification.type === 'error' ? 'border-red-500/30 text-red-600 dark:text-red-400' : 'border-slate-200 dark:border-white/10 text-blue-600 dark:text-blue-400'}`}>
+            {notification.type === 'error' ? <AlertCircle size={18} className="text-red-500 shrink-0 mt-0.5" /> : <CheckCircle2 size={18} className="text-blue-500 shrink-0 mt-0.5" />}
             <div className="flex flex-col min-w-0">
-              {notification.title && <span className="font-black text-[15px] uppercase mb-1 leading-tight">{notification.title}</span>}
-              <span className="font-medium text-[14px] text-slate-700 dark:text-slate-300 leading-relaxed">{notification.msg}</span>
+              {notification.title && <span className="font-semibold text-sm mb-0.5 leading-snug text-slate-900 dark:text-slate-100">{notification.title}</span>}
+              <span className="text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed">{notification.msg}</span>
             </div>
-            <button onClick={() => setNotification(null)} className="ml-auto p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors shrink-0"><X size={16} /></button>
+            <button onClick={() => setNotification(null)} className="ml-auto p-1 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors shrink-0 text-slate-400"><X size={16} /></button>
           </div>
         )}
 
@@ -324,41 +325,18 @@ export function Header() {
             <div className="flex items-center gap-3">
                 <HubElLogo className="w-8 h-8 shrink-0" />
                 
-                <form onSubmit={handleSearch} className="flex-1 relative">
-                  <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input autoFocus type="text" value={keyword} onFocus={() => setShowSuggestions(true)} onChange={(e) => { setKeyword(e.target.value); setShowSuggestions(true); }} placeholder="Tìm kiếm khóa học..." className="w-full pl-11 pr-12 py-2.5 bg-slate-100 dark:bg-slate-800/50 border border-transparent dark:border-slate-700/50 rounded-full text-sm outline-none text-slate-900 dark:text-white placeholder:text-slate-400" />
-                  
-                  <button type="submit" className="absolute right-1.5 top-1/2 -translate-y-1/2 p-2 bg-blue-600 text-white rounded-full active:scale-95 shadow-sm hover:bg-blue-700 transition-colors">
-                    <CornerDownLeft className="w-3.5 h-3.5" />
-                  </button>
-
-                  {(searchHistoryList.length > 0 || searchSuggestionsList.length > 0) && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-[#1e293b] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 py-2 z-[60] max-h-72 overflow-y-auto">
-                      {searchHistoryList.map((item, idx) => (
-                        <button
-                          key={`m-hist-${idx}`}
-                          type="button"
-                          onClick={() => executeSearch(item)}
-                          className="w-full px-4 py-2.5 flex items-center gap-3 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 transition-colors"
-                        >
-                          <History className="w-4 h-4 text-slate-400 shrink-0" />
-                          <span className="truncate font-medium">{item}</span>
-                        </button>
-                      ))}
-                      {searchSuggestionsList.map((item, idx) => (
-                        <button
-                          key={`m-sug-${idx}`}
-                          type="button"
-                          onClick={() => executeSearch(item)}
-                          className="w-full px-4 py-2.5 flex items-center gap-3 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors"
-                        >
-                          <Search className="w-4 h-4 text-blue-500 shrink-0" />
-                          <span className="truncate">{item}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </form>
+                <div className="flex-1 min-w-0">
+                  <LucianSearchBar
+                    value={keyword}
+                    onChange={setKeyword}
+                    onSubmitTerm={executeSearch}
+                    historyList={searchHistoryList}
+                    suggestionList={searchSuggestionsList}
+                    isOpen={showSuggestions}
+                    onOpenChange={setShowSuggestions}
+                    placeholder="Tìm kiếm khóa học"
+                  />
+                </div>
 
                 <button type="button" onClick={() => setIsMobileSearchOpen(false)} className="p-2 rounded-full bg-slate-100 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 active:scale-95 shrink-0"><X className="w-5 h-5" /></button>
             </div>
@@ -379,64 +357,23 @@ export function Header() {
             
             <div className="flex items-center gap-2 shrink-0">
               <HubElLogo className="w-7 h-7 md:w-8 md:h-8" />
-              <span className="font-black text-lg md:text-2xl bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent truncate hidden sm:block">Hub-EL</span>
+              <span className="font-semibold text-lg md:text-xl tracking-tight text-slate-900 dark:text-slate-100 truncate hidden sm:block">Hub-EL</span>
               <button onClick={() => setIsMobileSearchOpen(true)} className="lg:hidden ml-1 p-2 bg-slate-100 dark:bg-slate-800/50 rounded-full text-slate-500 hover:text-blue-500 shadow-sm active:scale-95 transition-colors">
                 <Search className="w-4 h-4" />
               </button>
             </div>
 
             <div className="flex-1 hidden lg:flex items-center justify-center gap-3 px-4 max-w-2xl" ref={desktopSearchRef}>
-              <form onSubmit={handleSearch} className="w-full relative group">
-                <input
-                  type="text"
-                  placeholder="Tìm kiếm khóa học..."
-                  value={keyword}
-                  onFocus={() => setShowSuggestions(true)}
-                  onChange={(e) => {
-                    setKeyword(e.target.value);
-                    setShowSuggestions(true);
-                  }}
-                  className="w-full pl-11 pr-4 py-2.5 bg-slate-100 dark:bg-slate-800/50 border border-transparent dark:border-slate-700/50 rounded-full text-sm outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
-                />
-                <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500" />
-
-                {showSuggestions && (searchHistoryList.length > 0 || searchSuggestionsList.length > 0) && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-[#1e293b] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 py-2 z-50 max-h-80 overflow-y-auto animate-in fade-in slide-in-from-top-1">
-                    {searchHistoryList.length > 0 && (
-                      <div className="px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                        Tìm kiếm gần đây
-                      </div>
-                    )}
-                    {searchHistoryList.map((item, idx) => (
-                      <button
-                        key={`d-hist-${idx}`}
-                        type="button"
-                        onClick={() => executeSearch(item)}
-                        className="w-full px-4 py-2.5 flex items-center gap-3 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 transition-colors"
-                      >
-                        <History className="w-4 h-4 text-slate-400 shrink-0" />
-                        <span className="truncate font-medium">{item}</span>
-                      </button>
-                    ))}
-                    {searchSuggestionsList.length > 0 && (
-                      <div className="px-4 pt-2 pb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400 border-t border-slate-100 dark:border-slate-800 mt-1">
-                        Gợi ý cho bạn
-                      </div>
-                    )}
-                    {searchSuggestionsList.map((item, idx) => (
-                      <button
-                        key={`d-sug-${idx}`}
-                        type="button"
-                        onClick={() => executeSearch(item)}
-                        className="w-full px-4 py-2.5 flex items-center gap-3 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors"
-                      >
-                        <Search className="w-4 h-4 text-blue-500 shrink-0" />
-                        <span className="truncate">{item}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </form>
+              <LucianSearchBar
+                value={keyword}
+                onChange={setKeyword}
+                onSubmitTerm={executeSearch}
+                historyList={searchHistoryList}
+                suggestionList={searchSuggestionsList}
+                isOpen={showSuggestions}
+                onOpenChange={setShowSuggestions}
+                placeholder="Tìm kiếm khóa học"
+              />
 
               <div className="relative" ref={linkPopupRef}>
                 <button onClick={() => setShowLinkInput(!showLinkInput)} className={`p-2.5 rounded-full border ${showLinkInput ? 'bg-blue-600 text-white border-transparent' : 'bg-slate-100 dark:bg-slate-800/50 text-gray-500 dark:text-gray-400 shadow-sm border-transparent dark:border-slate-700/50'}`}><LinkIcon className="w-4 h-4" /></button>
