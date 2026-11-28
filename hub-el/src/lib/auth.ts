@@ -32,7 +32,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         },
       },
     }),
-    GitHub,
+    GitHub({
+      clientId: process.env.AUTH_GITHUB_ID,
+      clientSecret: process.env.AUTH_GITHUB_SECRET,
+      issuer: "https://github.com/login/oauth",
+    }),
     CredentialsProvider({
       name: "Credentials",
       credentials: {
@@ -154,5 +158,4 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return session;
     },
   },
-  trustHost: true,
 })
